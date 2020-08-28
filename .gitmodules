@@ -61,3 +61,6 @@
 [submodule "vendor/nim-status"]
 	path = vendor/nim-status
 	url = https://github.com/status-im/nim-status
+[submodule "vendor/fdk-aac"]
+	path = vendor/fdk-aac
+	url = https://github.com/mstorsjo/fdk-aac

@@ -25,6 +25,25 @@ Item {
         font.pixelSize: 17
     }
 
+    Button {
+        text: "START"
+        onClicked: {
+            chatsModel.startRecording()
+        }
+        anchors.top: parent.top
+        anchors.left: parent.left
+    }
+
+    Button {
+        text: "STOP"
+        onClicked: {
+            chatsModel.stopRecording()
+        }
+        anchors.top: parent.top
+        anchors.right: parent.right
+    }
+
+
     PublicChatPopup {
         id: publicChatPopup
     }

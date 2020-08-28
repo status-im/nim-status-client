@@ -158,7 +158,7 @@ ifneq ($(detected_OS),Windows)
  DOTHERSIDE_CMAKE_PARAMS := -DENABLE_DYNAMIC_LIBS=OFF -DENABLE_STATIC_LIBS=ON
  DOTHERSIDE_BUILD_CMD := $(MAKE) VERBOSE=$(V) $(HANDLE_OUTPUT)
  # order matters here, due to "-Wl,-as-needed"
- NIM_PARAMS += --passL:"$(DOTHERSIDE)" --passL:"$(shell PKG_CONFIG_PATH="$(QT5_PCFILEDIR)" pkg-config --libs Qt5Core Qt5Qml Qt5Gui Qt5Quick Qt5QuickControls2 Qt5Widgets Qt5Svg)"
+ NIM_PARAMS += --passL:"$(DOTHERSIDE)" --passL:"$(shell PKG_CONFIG_PATH="$(QT5_PCFILEDIR)" pkg-config --libs Qt5Core Qt5Qml Qt5Gui Qt5Quick Qt5QuickControls2 Qt5Widgets Qt5Svg Qt5Multimedia)"
 else
  DOTHERSIDE := vendor/DOtherSide/build/lib/Release/DOtherSide.dll
  DOTHERSIDE_CMAKE_PARAMS := -T"v141" -A x64 -DENABLE_DYNAMIC_LIBS=ON -DENABLE_STATIC_LIBS=OFF
@@ -202,6 +202,17 @@ $(QRCODEGEN): | deps
 	+ cd vendor/QR-Code-generator/c && \
 	  $(MAKE) $(QRCODEGEN_MAKE_PARAMS)
 
+FDKAAC := vendor/fdk-aac/build/lib/libfdk-aac.a
+
+$(FDKAAC): | deps
+	echo -e $(BUILD_MSG) "fdk-aac"
+	+ cd vendor/fdk-aac && \
+	  mkdir -p build && \
+		./autogen.sh && \
+		./configure --prefix="`pwd`/build" && \
+	  $(MAKE) && \
+		$(MAKE) install
+
 rcc:
 	echo -e $(BUILD_MSG) "resources.rcc"
 	rm -f ./resources.rcc
@@ -209,9 +220,9 @@ rcc:
 	./ui/generate-rcc.sh
 	rcc --binary ui/resources.qrc -o ./resources.rcc
 
-nim_status_client: | $(DOTHERSIDE) $(STATUSGO) $(QRCODEGEN) rcc deps
+nim_status_client: | $(DOTHERSIDE) $(STATUSGO) $(QRCODEGEN) $(FDKAAC) rcc deps
 	echo -e $(BUILD_MSG) "$@" && \
-		$(ENV_SCRIPT) nim c $(NIM_PARAMS) --passL:"$(STATUSGO)" $(NIM_EXTRA_PARAMS) --passL:"$(QRCODEGEN)" --passL:"-lm" src/nim_status_client.nim
+		$(ENV_SCRIPT) nim c $(NIM_PARAMS) --passL:"$(STATUSGO)" $(NIM_EXTRA_PARAMS) --passL:"$(QRCODEGEN)" --passL:"$(FDKAAC)" --passL:"-lm" src/nim_status_client.nim
 
 _APPIMAGE_TOOL := appimagetool-x86_64.AppImage
 APPIMAGE_TOOL := tmp/linux/tools/$(_APPIMAGE_TOOL)

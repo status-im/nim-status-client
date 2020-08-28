@@ -10,11 +10,15 @@ import ../../status/ens as status_ens
 import ../../status/chat/[chat, message]
 import ../../status/libstatus/types
 import ../../status/profile/profile
+import ../../status/audio/encoder
 import eth/common/eth_types
 import ../../status/threads
 import views/channels_list, views/message_list, views/chat_item, views/sticker_pack_list, views/sticker_list, views/suggestions_list
 import json_serialization
 from eth/common/utils import parseAddress
+
+var phAacEncoder: AACENCODER = nil
+
 
 logScope:
   topics = "chats-view"
@@ -35,6 +39,7 @@ QtObject:
       channelOpenTime*: Table[string, int64]
       connected: bool
       unreadMessageCnt: int
+      audioRecorder: QAudioRecorder
 
   proc setup(self: ChatsView) = self.QAbstractListModel.setup
 
@@ -46,6 +51,7 @@ QtObject:
       msg.delete
     self.messageList = initTable[string, ChatMessageList]()
     self.channelOpenTime = initTable[string, int64]()
+    self.audioRecorder.delete
     self.QAbstractListModel.delete
 
   proc newChatsView*(status: Status): ChatsView =
@@ -491,3 +497,84 @@ QtObject:
     if (selectedChannel == nil): return false
     result = selectedChannel.muted
     
+
+  proc startRecording*(self: ChatsView) {.slot.}=
+    self.audioRecorder = newQAudioRecorder(TMPDIR)
+    self.audioRecorder.start()
+
+  proc stopRecording*(self: ChatsView) {.slot.} =
+    echo self.audioRecorder.stop()
+
+    defer:
+      echo "TODO: delete audio file"
+
+    if aacEncOpen(phAacEncoder.unsafeAddr, 0.cuint, 0.cuint) != AACENC_ERROR.AACENC_OK:
+      error "Could not convert open encoder AAC"
+      return
+
+    echo aacEncoder_SetParam(phAacEncoder.unsafeAddr, AACENC_PARAM.AACENC_AOT, 2.cuint)
+    echo aacEncoder_SetParam(phAacEncoder.unsafeAddr, AACENC_PARAM.AACENC_SBR_MODE, 0.cuint) 
+    echo aacEncoder_SetParam(phAacEncoder.unsafeAddr, AACENC_PARAM.AACENC_CHANNELMODE, 2.cuint)
+    echo aacEncoder_SetParam(phAacEncoder.unsafeAddr, AACENC_PARAM.AACENC_SAMPLERATE, 22050.cuint)
+    echo aacEncoder_SetParam(phAacEncoder.unsafeAddr, AACENC_PARAM.AACENC_BITRATEMODE, 1.cuint)
+    
+
+#[
+    if aacEncoder_SetParam(phAacEncoder.addr, AACENC_PARAM.AACENC_CHANNELMODE, 2.cint) != AACENC_ERROR.AACENC_OK:
+      error "Could not set the Channel mode"
+      return
+
+    if aacEncoder_SetParam(phAacEncoder.addr, AACENC_PARAM.AACENC_SBR_MODE, 0.cint) != AACENC_ERROR.AACENC_OK:
+      error "Could not set the SBR"
+      return
+
+    if aacEncoder_SetParam(phAacEncoder.addr, AACENC_PARAM.AACENC_TRANSMUX, 2.cint) != AACENC_ERROR.AACENC_OK:
+      error "Could not set the transmux rate"
+      return
+
+    if aacEncoder_SetParam(phAacEncoder.addr, AACENC_PARAM.AACENC_SAMPLERATE, 22050.cint) != AACENC_ERROR.AACENC_OK:
+      error "Could not set the sample rate"
+      return
+
+    if aacEncoder_SetParam(phAacEncoder.addr, AACENC_PARAM.AACENC_BITRATEMODE, 1.cint) != AACENC_ERROR.AACENC_OK:
+      error "Could not set the VBR bitrate"
+      return
+
+    if aacEncoder_SetParam(phAacEncoder.addr, AACENC_PARAM.AACENC_CHANNELORDER, 1.cint) != AACENC_ERROR.AACENC_OK:
+      error "Could not set the channel order"
+      return
+   
+    if aacEncoder_SetParam(phAacEncoder.addr, AACENC_PARAM.AACENC_AFTERBURNER, 1.cint) != AACENC_ERROR.AACENC_OK:
+      error "Could not enable afterburner"
+      return
+
+    var identifier: int = 0
+    var bufElSizes: int = 2
+
+    var inArgs: AACENC_InArgs = AACENC_InArgs(
+      numInSamples: 0,
+      numAncBytes: 0
+    )
+
+    var outArgs: AACENC_InArgs;
+
+    #in_args.numInSamples = read <= 0 ? -1 : read/2;
+
+
+    #var inBuf: AACENC_BufDesc = AACENC_BufDesc(
+    #  numBufs: 1,
+    #  bufs: ptr pointer
+    #  bufferIdentifiers: identifier.addr
+    #  bufSizes: .....
+    #  bufElSizes: bufElSizes.addr
+    #)
+
+
+    #echo aacEncEncode(phAacEncoder.addr, &inBufDesc, &outBufDesc, &inargs, &outargs);
+    
+]#
+    if aacEncClose(phAacEncoder.addr) != AACENC_ERROR.AACENC_OK:
+      error "Could not close encoder AAC"
+      return
+
+

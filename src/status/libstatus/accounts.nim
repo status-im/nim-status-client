@@ -55,6 +55,7 @@ proc ensureDir(dirname: string) =
 proc initNode*() =
   ensureDir(DATADIR)
   ensureDir(KEYSTOREDIR)
+  ensureDir(TMPDIR)
 
   discard $nim_status.initKeystore(KEYSTOREDIR)
 
