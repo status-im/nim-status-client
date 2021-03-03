@@ -124,6 +124,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
+
         Input {
             id: txtPassword
             anchors.top: addressText.bottom

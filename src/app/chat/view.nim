@@ -185,7 +185,7 @@ QtObject:
     result = ""
     try:
       var image = image_utils.formatImagePath(imagePath)
-      let tmpImagePath = image_resizer(image, 2000, TMPDIR)
+      let tmpImagePath = image_resizer(image, 2000, USRTMPDIR)
 
       var channelId = self.activeChannel.id
       
@@ -749,7 +749,7 @@ QtObject:
         # TODO Change this to get it from the user choices
       let access = ord(CommunityAccessLevel.public)
       var image = image_utils.formatImagePath(imagePath)
-      let tmpImagePath = image_resizer(image, 2000, TMPDIR)
+      let tmpImagePath = image_resizer(image, 2000, USRTMPDIR)
       let community = self.status.chat.createCommunity(name, description, color, tmpImagePath, access)
       removeFile(tmpImagePath)
      

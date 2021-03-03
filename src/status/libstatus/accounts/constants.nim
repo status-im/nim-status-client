@@ -202,4 +202,4 @@ let clientDir =
 
 let DATADIR* = joinPath(clientDir, "data") & sep
 let KEYSTOREDIR* = joinPath(clientDir, "data", "keystore") & sep
-let TMPDIR* = joinPath(clientDir, "tmp") & sep
+let USRTMPDIR* = joinPath(clientDir, "tmp") & sep

@@ -64,7 +64,7 @@ proc mainProc() =
   elif (defined(linux)):
     i18nPath = joinPath(getAppDir(), "../i18n")
 
-  let networkAccessFactory = newQNetworkAccessManagerFactory(TMPDIR & "netcache")
+  let networkAccessFactory = newQNetworkAccessManagerFactory(USRTMPDIR & "netcache")
 
   let engine = newQQmlApplicationEngine()
   engine.setNetworkAccessManagerFactory(networkAccessFactory)
@@ -193,6 +193,9 @@ proc mainProc() =
     tearDownForeignThreadGc()
 
   nim_status.setSignalEventCallback(callback)
+
+  var CachedIPFSimageProvider = newQIPFSAsyncImageProvider(USRTMPDIR & "ipfscache", "https://ipfs.status.im/ipfs/")
+  engine.addImageProvider("ipfs-cache", CachedIPFSimageProvider)
 
   # Qt main event loop is entered here
   # The termination of the loop will be performed when exit() or quit() is called

@@ -229,7 +229,7 @@ Popup {
                             width: 24
                             height: 24
                             selected: stickerPackListView.selectedPackId === packId
-                            source: "https://ipfs.infura.io/ipfs/" + thumbnail
+                            source: "image://ipfs-cache/" + thumbnail
                             Layout.preferredHeight: height
                             Layout.preferredWidth: width
                             onClicked: {
