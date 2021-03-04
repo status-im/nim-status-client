@@ -1,8 +1,5 @@
-import NimQml, tables, json, chronicles, strutils, json_serialization
-import ../libstatus/types as status_types
-import types, messages, discovery, whisperFilter, envelopes, expired, wallet, mailserver
-import ../status
-import ../../eventemitter
+import
+  chronicles, chronos, NimQml, task_runner
 
 logScope:
   topics = "tasks-signals"
@@ -10,11 +7,13 @@ logScope:
 QtObject:
   type TasksSignalsController* = ref object of QObject
     variant*: QVariant
+    chanSend: AsyncChannel[ThreadSafeString]
 
-  proc newController*(): TasksSignalsController =
+  proc newController*(chanSend: AsyncChannel[ThreadSafeString]): TasksSignalsController =
     new(result)
     result.setup()
     result.variant = newQVariant(result)
+    result.chanSend = chanSend
 
   proc setup(self: TasksSignalsController) =
     self.QObject.setup()
@@ -29,8 +28,12 @@ QtObject:
 
     # self.status.events.emit(signalType.event, signal)
 
-  # proc signalReceived*(self: TasksSignalsController, signal: string) {.signal.}
+  proc signalReceived*(self: TasksSignalsController, signal: string) {.signal.}
 
   proc receiveSignal(self: TasksSignalsController, signal: string) {.slot.} =
     self.processSignal(signal)
-    # self.signalReceived(signal)
+    self.signalReceived(signal)
+
+  proc createTask(self: TasksSignalsController) {.slot.} =
+    debugEcho ">>> [signals/tasks.createTask] sending task to channel"
+    self.chanSend.sendSync("do task".safe)

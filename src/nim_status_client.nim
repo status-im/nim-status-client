@@ -19,7 +19,6 @@ import ./eventemitter
 import chronos, task_runner
 
 var signalsQObjPointer: pointer
-# var tasksSignalsQObjPointer: pointer
 
 logScope:
   topics = "main"
@@ -34,21 +33,20 @@ proc worker(arg: ThreadArg) {.async.} =
   let chanRecv = arg.chanRecv
   let chanSend = arg.chanSend
   var count = 0
-  debugEcho ">>> [nim_status_client.worker] thread arg: ", repr arg
-  # chanRecv.open()
-  # chanSend.open()
+  chanRecv.open()
+  chanSend.open()
 
   while true:
+    let received = $(await chanRecv.recv())
+    debugEcho ">>> [nim_status_client.worker] received message: ", received
     # await chanSend.send("hello".safe)
-    signal_handler(arg.tasksControllerPtr, cstring("hello " & $count), "receiveSignal")
-    # signal_handler(signalsQObjPointer, cstring("hello " & $count), "receiveSignal")
+    if (received == "do task"):
+      signal_handler(arg.tasksControllerPtr, "task result " & $count, "receiveSignal")
 
-    # debugEcho ">>> [nim_status_client.worker] count: ", $count
     count = count + 1
     await sleepAsync 1000.milliseconds
 
 proc workerThread(arg: ThreadArg) {.thread.} =
-  # sleep 7000
   waitFor worker(arg)
 
 proc mainProc() =
@@ -60,20 +58,17 @@ proc mainProc() =
 
   let chanRecv = newAsyncChannel[ThreadSafeString](-1)
   let chanSend = newAsyncChannel[ThreadSafeString](-1)
-  let tasksSignalController = tasks.newController()
-  # tasksSignalsQObjPointer = cast[pointer](tasksSignalController.vptr)
+  let tasksSignalController = tasks.newController(chanRecv)
   let arg = ThreadArg(
     chanRecv: chanSend,
     chanSend: chanRecv,
     tasksControllerPtr: cast[pointer](tasksSignalController.vptr)
   )
-  debugEcho ">>> [nim_status_client.mainProc] created thread arg: ", repr arg
   var thr = Thread[ThreadArg]()
 
   # chanRecv.open()
   # chanSend.open()
   createThread(thr, workerThread, arg)
-  debugEcho ">>> [nim_status_client.mainProc] created thread"
 
   let status = statuslib.newStatusInstance(readFile(joinPath(getAppDir(), fleets)))
   status.initNode()
