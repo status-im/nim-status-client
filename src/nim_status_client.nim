@@ -10,16 +10,46 @@ import app/onboarding/core as onboarding
 import app/login/core as login
 import app/provider/core as provider
 import status/signals/core as signals
+import status/signals/tasks as tasks
 import status/libstatus/types
 import status/libstatus/accounts/constants
 import nim_status
 import status/status as statuslib
 import ./eventemitter
+import chronos, task_runner
 
 var signalsQObjPointer: pointer
+# var tasksSignalsQObjPointer: pointer
 
 logScope:
   topics = "main"
+
+type
+  ThreadArg = object
+    chanRecv: AsyncChannel[ThreadSafeString]
+    chanSend: AsyncChannel[ThreadSafeString]
+    tasksControllerPtr: pointer
+
+proc worker(arg: ThreadArg) {.async.} =
+  let chanRecv = arg.chanRecv
+  let chanSend = arg.chanSend
+  var count = 0
+  debugEcho ">>> [nim_status_client.worker] thread arg: ", repr arg
+  # chanRecv.open()
+  # chanSend.open()
+
+  while true:
+    # await chanSend.send("hello".safe)
+    signal_handler(arg.tasksControllerPtr, cstring("hello " & $count), "receiveSignal")
+    # signal_handler(signalsQObjPointer, cstring("hello " & $count), "receiveSignal")
+
+    # debugEcho ">>> [nim_status_client.worker] count: ", $count
+    count = count + 1
+    await sleepAsync 1000.milliseconds
+
+proc workerThread(arg: ThreadArg) {.thread.} =
+  # sleep 7000
+  waitFor worker(arg)
 
 proc mainProc() =
   let fleets =
@@ -27,6 +57,23 @@ proc mainProc() =
       "/../resources/fleets.json"
     else:
       "/../fleets.json"
+
+  let chanRecv = newAsyncChannel[ThreadSafeString](-1)
+  let chanSend = newAsyncChannel[ThreadSafeString](-1)
+  let tasksSignalController = tasks.newController()
+  # tasksSignalsQObjPointer = cast[pointer](tasksSignalController.vptr)
+  let arg = ThreadArg(
+    chanRecv: chanSend,
+    chanSend: chanRecv,
+    tasksControllerPtr: cast[pointer](tasksSignalController.vptr)
+  )
+  debugEcho ">>> [nim_status_client.mainProc] created thread arg: ", repr arg
+  var thr = Thread[ThreadArg]()
+
+  # chanRecv.open()
+  # chanSend.open()
+  createThread(thr, workerThread, arg)
+  debugEcho ">>> [nim_status_client.mainProc] created thread"
 
   let status = statuslib.newStatusInstance(readFile(joinPath(getAppDir(), fleets)))
   status.initNode()
@@ -181,6 +228,7 @@ proc mainProc() =
     initControllers()
 
   engine.setRootContextProperty("signals", signalController.variant)
+  engine.setRootContextProperty("tasks", tasksSignalController.variant)
 
   engine.load(newQUrl("qrc:///main.qml"))
 

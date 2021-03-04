@@ -91,3 +91,6 @@
 [submodule "vendor/nim-base32"]
 	path = vendor/nim-base32
 	url = https://github.com/elktree/nim-base32
+[submodule "vendor/nim-task-runner"]
+	path = vendor/nim-task-runner
+	url = https://github.com/status-im/nim-task-runner.git
