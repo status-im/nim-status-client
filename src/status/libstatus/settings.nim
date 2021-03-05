@@ -22,16 +22,16 @@ proc getWeb3ClientVersion*(): string =
   parseJson(callPrivateRPC("web3_clientVersion"))["result"].getStr
 
 proc getSettings*(useCached: bool = true, keepSensitiveData: bool = false): JsonNode =
-  withLock settingsLock:
-    {.gcsafe.}:
-      if useCached and not dirty and not keepSensitiveData:
-        result = settings
-      else: 
-        result = callPrivateRPC("settings_getSettings").parseJSON()["result"]
-        if not keepSensitiveData:
-          dirty = false
-          delete(result, "mnemonic")
-          settings = result
+  # withLock settingsLock:
+  # {.gcsafe.}:
+    # if useCached and not dirty and not keepSensitiveData:
+    #   result = settings
+    # else: 
+  result = callPrivateRPC("settings_getSettings").parseJSON()["result"]
+  if not keepSensitiveData:
+    # dirty = false
+    delete(result, "mnemonic")
+    # settings = result
 
 proc getSetting*[T](name: Setting, defaultValue: T, useCached: bool = true): T =
   let settings: JsonNode = getSettings(useCached, $name == "mnemonic")

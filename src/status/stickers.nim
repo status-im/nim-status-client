@@ -51,11 +51,36 @@ proc buildTransaction(self: StickersModel, packId: Uint256, address: Address, pr
   approveAndCall = ApproveAndCall[100](to: stickerMktContract.address, value: price, data: DynamicBytes[100].fromHex(buyTxAbiEncoded))
   transactions.buildTokenTransaction(address, sntContract.address, gas, gasPrice)
 
+proc buildTransaction2(packId: Uint256, address: Address, price: Uint256, approveAndCall: var ApproveAndCall[100], sntContract: var Erc20Contract, gas = "", gasPrice = ""): EthSend =
+  sntContract = status_contracts.getSntContract()
+  let
+    stickerMktContract = status_contracts.getContract("sticker-market")
+    buyToken = BuyToken(packId: packId, address: address, price: price)
+    buyTxAbiEncoded = stickerMktContract.methods["buyToken"].encodeAbi(buyToken)
+  approveAndCall = ApproveAndCall[100](to: stickerMktContract.address, value: price, data: DynamicBytes[100].fromHex(buyTxAbiEncoded))
+  transactions.buildTokenTransaction(address, sntContract.address, gas, gasPrice)
+
 proc estimateGas*(self: StickersModel, packId: int, address: string, price: string, success: var bool): int =
   var
     approveAndCall: ApproveAndCall[100]
     sntContract = status_contracts.getSntContract()
     tx = self.buildTransaction(
+      packId.u256,
+      parseAddress(address),
+      eth2Wei(parseFloat(price), sntContract.decimals),
+      approveAndCall,
+      sntContract
+    )
+
+  let response = sntContract.methods["approveAndCall"].estimateGas(tx, approveAndCall, success)
+  if success:
+    result = fromHex[int](response)
+
+proc estimateGas2*(packId: int, address: string, price: string, success: var bool): int =
+  var
+    approveAndCall: ApproveAndCall[100]
+    sntContract = status_contracts.getSntContract()
+    tx = buildTransaction2(
       packId.u256,
       parseAddress(address),
       eth2Wei(parseFloat(price), sntContract.decimals),

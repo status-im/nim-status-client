@@ -200,19 +200,6 @@ Item {
             color: Style.current.danger
         }
     }
-    StatusButton {
-        text: "Fire task"
-        onClicked: {
-            console.log(">>> [Login > StatusButton.onClicked] fire task clicked")
-            tasks.createTask()
-        }
-    }
-    Connections {
-        target: tasks
-        onSignalReceived: {
-            console.log("Task signal: ", signal)
-        }
-    }
 }
 
 /*##^##

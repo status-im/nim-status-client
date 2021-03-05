@@ -23,31 +23,26 @@ var signalsQObjPointer: pointer
 logScope:
   topics = "main"
 
-type
-  ThreadArg = object
-    chanRecv: AsyncChannel[ThreadSafeString]
-    chanSend: AsyncChannel[ThreadSafeString]
-    tasksControllerPtr: pointer
 
-proc worker(arg: ThreadArg) {.async.} =
-  let chanRecv = arg.chanRecv
-  let chanSend = arg.chanSend
-  var count = 0
-  chanRecv.open()
-  chanSend.open()
+# proc worker(arg: ThreadArg) {.async.} =
+#   let chanRecv = arg.chanRecv
+#   let chanSend = arg.chanSend
+#   var count = 0
+#   chanRecv.open()
+#   chanSend.open()
 
-  while true:
-    let received = $(await chanRecv.recv())
-    debugEcho ">>> [nim_status_client.worker] received message: ", received
-    # await chanSend.send("hello".safe)
-    if (received == "do task"):
-      signal_handler(arg.tasksControllerPtr, "task result " & $count, "receiveSignal")
+#   while true:
+#     let received = $(await chanRecv.recv())
+#     debugEcho ">>> [nim_status_client.worker] received message: ", received
+#     # await chanSend.send("hello".safe)
+#     if (received == "do task"):
+#       signal_handler(arg.tasksControllerPtr, "task result " & $count, "receiveSignal")
 
-    count = count + 1
-    await sleepAsync 1000.milliseconds
+#     count = count + 1
+#     # await sleepAsync 1000.milliseconds
 
-proc workerThread(arg: ThreadArg) {.thread.} =
-  waitFor worker(arg)
+# proc workerThread(arg: ThreadArg) {.thread.} =
+#   waitFor worker(arg)
 
 proc mainProc() =
   let fleets =
@@ -56,21 +51,16 @@ proc mainProc() =
     else:
       "/../fleets.json"
 
-  let chanRecv = newAsyncChannel[ThreadSafeString](-1)
   let chanSend = newAsyncChannel[ThreadSafeString](-1)
-  let tasksSignalController = tasks.newController(chanRecv)
-  let arg = ThreadArg(
-    chanRecv: chanSend,
-    chanSend: chanRecv,
-    tasksControllerPtr: cast[pointer](tasksSignalController.vptr)
-  )
   var thr = Thread[ThreadArg]()
+  let taskManager = tasks.newTaskManager(chanSend, thr)
+  let arg = ThreadArg(
+    chanRecv: chanSend
+  )
 
-  # chanRecv.open()
-  # chanSend.open()
   createThread(thr, workerThread, arg)
 
-  let status = statuslib.newStatusInstance(readFile(joinPath(getAppDir(), fleets)))
+  let status = statuslib.newStatusInstance(taskManager, readFile(joinPath(getAppDir(), fleets)))
   status.initNode()
 
   enableHDPI()
@@ -194,6 +184,7 @@ proc mainProc() =
     profile.delete()
     utilsController.delete()
     browserController.delete()
+    taskManager.delete()
 
 
   # Initialize only controllers whose init functions
@@ -223,7 +214,7 @@ proc mainProc() =
     initControllers()
 
   engine.setRootContextProperty("signals", signalController.variant)
-  engine.setRootContextProperty("tasks", tasksSignalController.variant)
+  # engine.setRootContextProperty("tasks", tasksSignalController.variant)
 
   engine.load(newQUrl("qrc:///main.qml"))
 
