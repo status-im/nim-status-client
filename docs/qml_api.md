@@ -16,7 +16,7 @@ The `walletModel` exposes the following signals, which can be consumed in QML us
 | `currentAssetListChanged` | none | fired when the token assets for the currently selected account have changed |
 | `totalFiatBalanceChanged` | none | fired when the total equivalent fiat balance of all accounts has changed |
 | `accountListChanged` | none | fired when accounts on the node have chagned |
-| `transactionWasSent` | `txResult` (`string`): JSON stringified result of sending a transaction | fired when accounts on the node have chagned |
+| `transactionWasSent` | `txResult` (`string`): JSON stringified result of sending a transaction | fired when a transaction was sent (wallet, sticker purchase, ENS, etc) |
 | `defaultCurrencyChanged` | none | fired when the user's default currency has chagned |
 | `gasPricePredictionsChanged` | none | fired when the gas price predictions have changed, typically after getting a gas price prediction response |
 | `historyWasFetched` | none | fired when `status-go` completes fetching of transaction history |
@@ -205,14 +205,34 @@ The `chatsModel` exposes the following signals, which can be consumed in QML usi
 | Name          | Parameters     | Description  |
 |---------------|----------|--------------|
 | `oldestMessageTimestampChanged` | none | fired when the oldest message timestamp has changed |
-**WIP**
+| `activeChannelChanged` | none | fired when the active chat channel has changed |
+| `contextChannelChanged` | none | fired when the context menu (right-click menu) channel has changed |
+| `sendingMessage` | none | typically fired once messages in the chat have been sent |
+| `appReady` | none | fired once chats, profile updates, and timeline have been loaded |
+| `sendingMessageFailed` | none | fired after a message has failed to be sent |
+| `messagePushed` | none | fired after a message was added to the timeline or to any chat message list |
+| `newMessagePushed` | `messageIndex` (`int`): index of the message in the message list | fired after a message was newly received in the currently active chat and was added to active chat message list |
+| `messageNotificationPushed` | `chatId` (`string`): id of the chat the message belongs to<br>`text` (`string`): text of the notification<br>`messageType` (`string`): type of message<br>`chatType` (`int`) integer representation of the type of chat<br>`timestamp` (`string`): string represnetation of the UNIX timestamp of the message<br>`identiticon` (`string`): base64-encoded image of the sender's identicon<br>`username` (`string`): sender's three-word alias<br>`hasMention` (`bool`): `true` if the message contains a mention of another user<br>`isAddedContact` (`bool`): `true` if the sender has been added as a contact<br>`channelName` (`string`): name of the channel the message was sent on | fired after a message was newly received in the currently active chat and was added to active chat message list |
+| `messagesCleared` | none | removes messages from being displayed for all the chats |
+| `linkPreviewDataWasReceived` | `previewData` (`string`) JSON string of the data returned | fired when link preview data was returned from status-go |
+| `messagesLoaded` | none | fired after previous messages were fetched (fetch more messages) |
+| `loadingMessagesChanged` | `value` (`bool`): `true` if loading messages from status-go | fired after the flag indicating whether or not messages are loading has changed |
+| `unreadMessagesCntChanged` | none | fired after the unread messages count has changed |
+| `ensWasResolved` | `resolvedPubKey` (`string`): public key that was resolved from the ENS name | fired after the ENS resolution has completed, passing in the resolved public key |
+| `onlineStatusChanged` | `connected` (`bool`): `true` if connected to the internet | fired after the internet connectivity status has changed (based on peer count reported by status-go) |
 
 ### QtProperties
 The following properties can be accessed directly on the `chatsModel`, ie `chatsModel.oldestMsgTimestamp`
 | Name          | Type | Accessibility | Signal | Description  |
 |---------------|------|---------------|--------|--------------|
 | `oldestMsgTimestamp` | `QVariant<int64>` | `read` | `oldestMessageTimestampChanged` | Gets the last set UNIX timestamp of the oldest message. See `setLastMessageTimestamp` for logic on how this is determined. |
-**WIP**
+| `chats` | `QVariant<ChannelsList>` | `read` | none | Gets the `ChannelsList` containing the chat channels views. See `ChannelsList` below for more information. |
+| `communities` | `QVariant<CommunitiesView>` | `read` | none | Gets the `CommunitiesView` containing the communities view. See `CommunitiesView` below for more information. |
+| `activeChannelIndex` | `int` | `read`/`write` | `activeChannelChanged` | Gets the index of the currently active community in the list of communities (if activated) or the currently active channel in the list of chats. |
+| `activeChannel` | `QVariant<ChatItemView>` | `read`/`write` | `activeChannelChanged` | Gets the currently active channel in the list of chats. |
+| `contextChannel` | `QVariant<ChatItemView>` | `read`/`write` | `contextChannelChanged` | Gets the current channel used for the context menu (right-click menu). |
+| `suggestionList` | `QVariant<SuggestionsList>` | `read` | none | Gets the current suggestion list view. |
+
 
 ### Methods
 Methods can be invoked by calling them directly on the `chatsModel`, ie `chatsModel.getOldestMessageTimestamp()`.
