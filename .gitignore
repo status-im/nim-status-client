@@ -4,6 +4,7 @@ noBackup/
 *.pro.user
 *.pro.autosave
 *.qml.autosave
+.update.timestamp
 .vscode
 bin/
 /bottles/

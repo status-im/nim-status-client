@@ -491,9 +491,8 @@ QtObject:
   proc gasPricePredictionsChanged*(self: WalletView) {.signal.}
 
   proc getGasPricePredictions*(self: WalletView) {.slot.} =
-    let walletModel = self.status.wallet
     spawnAndSend(self, "getGasPricePredictionsResult") do:
-      $ %walletModel.getGasPricePredictions()
+      $ %getGasPricePredictions2()
 
   proc getGasPricePredictionsResult(self: WalletView, gasPricePredictionsJson: string) {.slot.} =
     let prediction = Json.decode(gasPricePredictionsJson, GasPricePrediction)

@@ -47,7 +47,8 @@ proc decodeContentHash*(value: string): string =
     # 20 = multihash length = 32
     # ...rest = multihash digest
     let multiHash = MultiHash.init(nimcrypto.fromHex(multiHashStr)).get()
-    result = $Cid.init(CIDv0, MultiCodec.codec(codec), multiHash)
+    let resultTyped = Cid.init(CIDv0, MultiCodec.codec(codec), multiHash).get()
+    result = $resultTyped
     trace "Decoded sticker hash", cid=result
   except Exception as e:
     error "Error decoding sticker", hash=value, exception=e.msg
@@ -59,14 +60,14 @@ proc decodeContentHash*(value: string): string =
 proc getBalance*(address: Address): int =
   let contract = contracts.getContract("sticker-pack")
   if contract == nil: return 0
-    
+
   let
     balanceOf = BalanceOf(address: address)
     payload = %* [{
       "to": $contract.address,
       "data": contract.methods["balanceOf"].encodeAbi(balanceOf)
     }, "latest"]
-  
+
   let responseStr = status.callPrivateRPC("eth_call", payload)
   let response = Json.decode(responseStr, RpcResponse)
   if not response.error.isNil:
@@ -84,7 +85,7 @@ proc getPackCount*(): int =
       "to": $contract.address,
       "data": contract.methods["packCount"].encodeAbi()
     }, "latest"]
-  
+
   let responseStr = status.callPrivateRPC("eth_call", payload)
   let response = Json.decode(responseStr, RpcResponse)
   if not response.error.isNil:
@@ -95,39 +96,38 @@ proc getPackCount*(): int =
 
 # Gets sticker pack data
 proc getPackData*(id: Stuint[256]): StickerPack =
-  {.gcsafe.}:
-    let
-      contract = contracts.getContract("stickers")
-      contractMethod = contract.methods["getPackData"]
-      getPackData = GetPackData(packId: id)
-      payload = %* [{
-        "to": $contract.address,
-        "data": contractMethod.encodeAbi(getPackData)
-        }, "latest"]
-    let responseStr = status.callPrivateRPC("eth_call", payload)
-    let response = Json.decode(responseStr, RpcResponse)
-    if not response.error.isNil:
-      raise newException(RpcException, "Error getting sticker pack data: " & response.error.message)
+  let
+    contract = contracts.getContract("stickers")
+    contractMethod = contract.methods["getPackData"]
+    getPackData = GetPackData(packId: id)
+    payload = %* [{
+      "to": $contract.address,
+      "data": contractMethod.encodeAbi(getPackData)
+      }, "latest"]
+  let responseStr = status.callPrivateRPC("eth_call", payload)
+  let response = Json.decode(responseStr, RpcResponse)
+  if not response.error.isNil:
+    raise newException(RpcException, "Error getting sticker pack data: " & response.error.message)
 
-    let packData = contracts.decodeContractResponse[PackData](response.result)
+  let packData = contracts.decodeContractResponse[PackData](response.result)
 
-    # contract response includes a contenthash, which needs to be decoded to reveal
-    # an IPFS identifier. Once decoded, download the content from IPFS. This content
-    # is in EDN format, ie https://ipfs.infura.io/ipfs/QmWVVLwVKCwkVNjYJrRzQWREVvEk917PhbHYAUhA1gECTM
-    # and it also needs to be decoded in to a nim type
-    let secureSSLContext = newContext()
-    let client = newHttpClient(sslContext = secureSSLContext)
-    let contentHash = contracts.toHex(packData.contentHash)
-    let url = "https://ipfs.infura.io/ipfs/" & decodeContentHash(contentHash)
-    var ednMeta = client.getContent(url)
+  # contract response includes a contenthash, which needs to be decoded to reveal
+  # an IPFS identifier. Once decoded, download the content from IPFS. This content
+  # is in EDN format, ie https://ipfs.infura.io/ipfs/QmWVVLwVKCwkVNjYJrRzQWREVvEk917PhbHYAUhA1gECTM
+  # and it also needs to be decoded in to a nim type
+  let secureSSLContext = newContext()
+  let client = newHttpClient(sslContext = secureSSLContext)
+  let contentHash = contracts.toHex(packData.contentHash)
+  let url = "https://ipfs.infura.io/ipfs/" & decodeContentHash(contentHash)
+  var ednMeta = client.getContent(url)
 
-    # decode the EDN content in to a StickerPack
-    result = edn_helpers.decode[StickerPack](ednMeta)
-    # EDN doesn't include a packId for each sticker, so add it here
-    result.stickers.apply(proc(sticker: var Sticker) =
-      sticker.packId = truncate(id, int))
-    result.id = truncate(id, int)
-    result.price = packData.price
+  # decode the EDN content in to a StickerPack
+  result = edn_helpers.decode[StickerPack](ednMeta)
+  # EDN doesn't include a packId for each sticker, so add it here
+  result.stickers.apply(proc(sticker: var Sticker) =
+    sticker.packId = truncate(id, int))
+  result.id = truncate(id, int)
+  result.price = packData.price
 
 proc tokenOfOwnerByIndex*(address: Address, idx: Stuint[256]): int =
   let
@@ -137,7 +137,7 @@ proc tokenOfOwnerByIndex*(address: Address, idx: Stuint[256]): int =
       "to": $contract.address,
       "data": contract.methods["tokenOfOwnerByIndex"].encodeAbi(tokenOfOwnerByIndex)
     }, "latest"]
-  
+
   let responseStr = status.callPrivateRPC("eth_call", payload)
   let response = Json.decode(responseStr, RpcResponse)
   if not response.error.isNil:
@@ -154,7 +154,7 @@ proc getPackIdFromTokenId*(tokenId: Stuint[256]): int =
       "to": $contract.address,
       "data": contract.methods["tokenPackId"].encodeAbi(tokenPackId)
     }, "latest"]
-  
+
   let responseStr = status.callPrivateRPC("eth_call", payload)
   let response = Json.decode(responseStr, RpcResponse)
   if not response.error.isNil:
@@ -202,7 +202,7 @@ proc getRecentStickers*(): seq[Sticker] =
 
 proc getAvailableStickerPacks*(): Table[int, StickerPack] =
   var availableStickerPacks = initTable[int, StickerPack]()
-  try: 
+  try:
     let numPacks = getPackCount()
     for i in 0..<numPacks:
       try:

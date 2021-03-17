@@ -5,6 +5,7 @@ import ../../../status/libstatus/stickers as status_stickers
 import ../../../status/libstatus/wallet as status_wallet
 import sticker_pack_list, sticker_list, chat_item
 import json_serialization
+import ../../../status/tasks/task_manager
 
 logScope:
   topics = "stickers-view"
@@ -30,10 +31,10 @@ QtObject:
     result.recentStickers = newStickerList()
     result.activeChannel = activeChannel
     result.setup
-    
+
   proc addStickerPackToList*(self: StickersView, stickerPack: StickerPack, isInstalled, isBought, isPending: bool) =
     self.stickerPacks.addStickerPackToList(stickerPack, newStickerList(stickerPack.stickers), isInstalled, isBought, isPending)
-  
+
   proc getStickerPackList(self: StickersView): QVariant {.slot.} =
     newQVariant(self.stickerPacks)
 
@@ -41,19 +42,12 @@ QtObject:
     read = getStickerPackList
 
   proc transactionWasSent*(self: StickersView, txResult: string) {.signal.}
-  
+
   proc transactionCompleted*(self: StickersView, success: bool, txHash: string, revertReason: string = "") {.signal.}
 
   proc estimate*(self: StickersView, packId: int, address: string, price: string, uuid: string) {.slot.} =
-    let status_stickers = self.status.stickers
-    spawnAndSend(self, "setGasEstimate") do:
-      var success: bool
-      var estimate = status_stickers.estimateGas(packId, address, price, success)
-      if not success:
-        estimate = 325000
-      let result: tuple[estimate: int, uuid: string] = (estimate, uuid)
-      Json.encode(result)
-  
+    self.status.taskManager.threadPool.stickers.stickerPackPurchaseGasEstimate(cast[pointer](self.vptr), "setGasEstimate", packId, address, price, uuid)
+
   proc gasEstimateReturned*(self: StickersView, estimate: int, uuid: string) {.signal.}
 
   proc setGasEstimate*(self: StickersView, estimateJson: string) {.slot.} =
@@ -63,7 +57,7 @@ QtObject:
   proc buy*(self: StickersView, packId: int, address: string, price: string, gas: string, gasPrice: string, password: string): string {.slot.} =
     var success: bool
     let response = self.status.stickers.buyPack(packId, address, price, gas, gasPrice, password, success)
-    # TODO: 
+    # TODO:
     # check if response["error"] is not null and handle the error
     result = $(%* { "result": %response, "success": %success })
     if success:
@@ -133,7 +127,7 @@ QtObject:
 
   proc resetBuyAttempt*(self: StickersView, packId: int) {.slot.} =
     self.stickerPacks.updateStickerPackInList(packId, false, false)
-  
+
   proc uninstall*(self: StickersView, packId: int) {.slot.} =
     self.status.stickers.uninstallStickerPack(packId)
     self.status.stickers.removeRecentStickers(packId)

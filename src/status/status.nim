@@ -4,6 +4,7 @@ import libstatus/settings as libstatus_settings
 import libstatus/types as libstatus_types
 import chat, accounts, wallet, node, network, mailservers, messages, contacts, profile, stickers, permissions, fleet
 import ../eventemitter
+import tasks/task_manager
 
 export chat, accounts, node, mailservers, messages, contacts, profile, network, permissions, fleet
 
@@ -21,9 +22,11 @@ type Status* = ref object
   network*: NetworkModel
   stickers*: StickersModel
   permissions*: PermissionsModel
+  taskManager*: TaskManager
 
-proc newStatusInstance*(fleetConfig: string): Status =
+proc newStatusInstance*(taskManager: TaskManager, fleetConfig: string): Status =
   result = Status()
+  result.taskManager = taskManager
   result.events = createEventEmitter()
   result.fleet = fleet.newFleetModel(result.events, fleetConfig)
   result.chat = chat.newChatModel(result.events)

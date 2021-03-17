@@ -21,12 +21,12 @@ const domain* = ".stateofus.eth"
 
 proc userName*(ensName: string, removeSuffix: bool = false): string =
   if ensName != "" and ensName.endsWith(domain):
-    if removeSuffix: 
+    if removeSuffix:
       result = ensName.split(".")[0]
     else:
       result = ensName
   else:
-    if ensName.endsWith(".eth") and removeSuffix: 
+    if ensName.endsWith(".eth") and removeSuffix:
       return ensName.split(".")[0]
     result = ensName
 
@@ -63,7 +63,7 @@ proc namehash*(ensName:string): string =
     concatArrays[0..31] = node
     concatArrays[32..63] = elem
     node = keccak_256.digest(concatArrays).data
-  
+
   result = "0x" & node.toHex()
 
 const registry* = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
@@ -81,7 +81,7 @@ proc resolver*(usernameHash: string): string =
   result = "0x" & resolverAddr
 
 const owner_signature = "0x02571be3" # owner(bytes32 node)
-proc owner*(username: string): string = 
+proc owner*(username: string): string =
   var userNameHash = namehash(addDomain(username))
   userNameHash.removePrefix("0x")
   let payload = %* [{
@@ -97,7 +97,7 @@ proc owner*(username: string): string =
   result = "0x" & ownerAddr.substr(26)
 
 const pubkey_signature = "0xc8690233" # pubkey(bytes32 node)
-proc pubkey*(username: string): string = 
+proc pubkey*(username: string): string =
   var userNameHash = namehash(addDomain(username))
   userNameHash.removePrefix("0x")
   let ensResolver = resolver(userNameHash)
@@ -116,7 +116,7 @@ proc pubkey*(username: string): string =
     result = "0x04" & pubkey
 
 const address_signature = "0x3b3b57de" # addr(bytes32 node)
-proc address*(username: string): string = 
+proc address*(username: string): string =
   var userNameHash = namehash(addDomain(username))
   userNameHash.removePrefix("0x")
   let ensResolver = resolver(userNameHash)
@@ -133,7 +133,7 @@ proc address*(username: string): string =
   result = "0x" & address.substr(26)
 
 const contenthash_signature = "0xbc1c58d1" # contenthash(bytes32)
-proc contenthash*(ensAddr: string): string = 
+proc contenthash*(ensAddr: string): string =
   var ensHash = namehash(ensAddr)
   ensHash.removePrefix("0x")
   let ensResolver = resolver(ensHash)
@@ -147,7 +147,7 @@ proc contenthash*(ensAddr: string): string =
   let bytesResponse = response.parseJson["result"].getStr;
   if bytesResponse == "0x":
     return ""
-  
+
   let size = fromHex(Stuint[256], bytesResponse[66..129]).truncate(int)
   result = bytesResponse[130..129+size*2]
 
@@ -159,7 +159,7 @@ proc getPrice*(): Stuint[256] =
       "to": $contract.address,
       "data": contract.methods["getPrice"].encodeAbi()
     }, "latest"]
-  
+
   let responseStr = callPrivateRPC("eth_call", payload)
   let response = Json.decode(responseStr, RpcResponse)
   if not response.error.isNil:
@@ -180,7 +180,7 @@ proc registerUsernameEstimateGas*(username: string, address: string, pubKey: str
     ensUsernamesContract = contracts.getContract("ens-usernames")
     sntContract = contracts.getSntContract()
     price = getPrice()
-  
+
   let
     register = Register(label: label, account: parseAddress(address), x: x, y: y)
     registerAbiEncoded = ensUsernamesContract.methods["register"].encodeAbi(register)
@@ -188,7 +188,7 @@ proc registerUsernameEstimateGas*(username: string, address: string, pubKey: str
     approveAndCallAbiEncoded = sntContract.methods["approveAndCall"].encodeAbi(approveAndCallObj)
 
   var tx = transactions.buildTokenTransaction(parseAddress(address), sntContract.address, "", "")
-  
+
   let response = sntContract.methods["approveAndCall"].estimateGas(tx, approveAndCallObj, success)
   if success:
     result = fromHex[int](response)
@@ -202,11 +202,11 @@ proc registerUsername*(username, pubKey, address, gas, gasPrice,  password: stri
     ensUsernamesContract = contracts.getContract("ens-usernames")
     sntContract = contracts.getSntContract()
     price = getPrice()
-  
+
   let
     register = Register(label: label, account: parseAddress(address), x: x, y: y)
     registerAbiEncoded = ensUsernamesContract.methods["register"].encodeAbi(register)
-    approveAndCallObj = ApproveAndCall[132](to: ensUsernamesContract.address, value: price, data: DynamicBytes[132].fromHex(registerAbiEncoded)) 
+    approveAndCallObj = ApproveAndCall[132](to: ensUsernamesContract.address, value: price, data: DynamicBytes[132].fromHex(registerAbiEncoded))
 
   var tx = transactions.buildTokenTransaction(parseAddress(address), sntContract.address, gas, gasPrice)
 
@@ -227,7 +227,7 @@ proc setPubKeyEstimateGas*(username: string, address: string, pubKey: string, su
     resolverAddress = resolver(hash)
 
   var tx = transactions.buildTokenTransaction(parseAddress(address), parseAddress(resolverAddress), "", "")
-  
+
   try:
     let response = resolverContract.methods["setPubkey"].estimateGas(tx, setPubkey, success)
     if success:
@@ -295,8 +295,10 @@ proc decodeENSContentHash*(value: string): tuple[ensType: ENSType, output: strin
       # 12 = identifies sha2-256 hash
       # 20 = multihash length = 32
       # ...rest = multihash digest
-      let multiHash = MultiHash.init(nimcrypto.fromHex(multiHashStr)).get()
-      return (ENSType.IPFS, $Cid.init(CIDv0, MultiCodec.codec(codec), multiHash))
+      let
+        multiHash = MultiHash.init(nimcrypto.fromHex(multiHashStr)).get()
+        decoded = Cid.init(CIDv0, MultiCodec.codec(codec), multiHash).get()
+      return (ENSType.IPFS, $decoded)
     except Exception as e:
       error "Error decoding ENS contenthash", hash=value, exception=e.msg
       raise

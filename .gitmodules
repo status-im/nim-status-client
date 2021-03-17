@@ -91,3 +91,9 @@
 [submodule "vendor/nim-status-go"]
 	path = vendor/nim-status-go
 	url = https://github.com/status-im/nim-status-go.git
+[submodule "vendor/nim-task-runner"]
+	path = vendor/nim-task-runner
+	url = https://github.com/status-im/nim-task-runner.git
+[submodule "vendor/edn.nim"]
+	path = vendor/edn.nim
+	url = https://github.com/status-im/edn.nim.git

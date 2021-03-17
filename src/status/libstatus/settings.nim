@@ -1,37 +1,46 @@
-import core, ./types, ../signals/types as statusgo_types, ./accounts/constants, ./utils
-import json, tables, sugar, sequtils, strutils
-import json_serialization
-import locks
-import uuids
+import
+  json, tables, sugar, sequtils, strutils, atomics
 
-var settingsLock {.global.}: Lock
-initLock(settingsLock)
+import
+  json_serialization, chronicles, uuids
 
-var settings = %*{}
-var dirty = true
+import
+  ./core, ./types, ../signals/types as statusgo_types, ./accounts/constants,
+  ./utils
+
+var
+  settings {.threadvar.}: JsonNode
+  settingsInited {.threadvar.}: bool
+  dirty: Atomic[bool]
+
+dirty.store(true)
+settings = %* {}
 
 proc saveSetting*(key: Setting, value: string | JsonNode): StatusGoError =
-  withLock settingsLock:
-    try:
-      let response = callPrivateRPC("settings_saveSetting", %* [key, value])
-      result = Json.decode($response, StatusGoError)
-    except:
-      dirty = true
+  try:
+    let response = callPrivateRPC("settings_saveSetting", %* [key, value])
+    let responseResult = $(response.parseJSON(){"result"})
+    if responseResult == "null":
+      result.error = ""
+    else: result = Json.decode(response, StatusGoError)
+  except Exception as e:
+    error "Error saving setting", key=key, value=value, msg=e.msg
+    dirty.store(true)
 
 proc getWeb3ClientVersion*(): string =
   parseJson(callPrivateRPC("web3_clientVersion"))["result"].getStr
 
 proc getSettings*(useCached: bool = true, keepSensitiveData: bool = false): JsonNode =
-  withLock settingsLock:
-    {.gcsafe.}:
-      if useCached and not dirty and not keepSensitiveData:
-        result = settings
-      else: 
-        result = callPrivateRPC("settings_getSettings").parseJSON()["result"]
-        if not keepSensitiveData:
-          dirty = false
-          delete(result, "mnemonic")
-          settings = result
+  let cacheIsDirty = (not settingsInited) or dirty.load
+  if useCached and (not cacheIsDirty) and (not keepSensitiveData):
+    result = settings
+  else: 
+    result = callPrivateRPC("settings_getSettings").parseJSON()["result"]
+    if not keepSensitiveData:
+      dirty.store(false)
+      delete(result, "mnemonic")
+      settings = result
+      settingsInited = true
 
 proc getSetting*[T](name: Setting, defaultValue: T, useCached: bool = true): T =
   let settings: JsonNode = getSettings(useCached, $name == "mnemonic")
