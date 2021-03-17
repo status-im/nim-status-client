@@ -28,7 +28,7 @@ type
   ThreadNotification = object
     id: int
     notice: string
-  
+
 
 # forward declarations
 proc poolThread(arg: PoolThreadArg) {.thread.}
@@ -62,7 +62,7 @@ proc teardown*(self: ThreadPool) =
   self.chanSendToPool.close()
   joinThread(self.thread)
 
-proc task(arg: TaskThreadArg) {.async.} =
+proc runTask(arg: TaskThreadArg) {.async.} =
   arg.chanRecvFromPool.open()
   arg.chanSendToPool.open()
 
@@ -91,7 +91,7 @@ proc task(arg: TaskThreadArg) {.async.} =
       case messageType
         of "StickerPackPurchaseGasEstimate":
           let decoded = Json.decode(received, StickerPackPurchaseGasEstimate, allowUnknownFields = true)
-          decoded.runTask()
+          decoded.task()
         else:
           error "[threadpool task thread] unknown message", message=received
     except Exception as e:
@@ -106,7 +106,7 @@ proc task(arg: TaskThreadArg) {.async.} =
   arg.chanSendToPool.close()
 
 proc taskThread(arg: TaskThreadArg) {.thread.} =
-  waitFor task(arg)
+  waitFor runTask(arg)
 
 proc pool(arg: PoolThreadArg) {.async.} =
   let

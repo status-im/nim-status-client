@@ -19,20 +19,20 @@ proc newStickersTasks*(chanSendToPool: AsyncChannel[ThreadSafeString]): Stickers
   new(result)
   result.chanSendToPool = chanSendToPool
 
-proc runTask*(stickerPackPurchaseGasEstimate: StickerPackPurchaseGasEstimate) =
+proc task*(arg: StickerPackPurchaseGasEstimate) =
   var success: bool
   var estimate = estimateGas2(
-    stickerPackPurchaseGasEstimate.packId,
-    stickerPackPurchaseGasEstimate.address,
-    stickerPackPurchaseGasEstimate.price,
+    arg.packId,
+    arg.address,
+    arg.price,
     success
   )
   if not success:
     estimate = 325000
-  let result: tuple[estimate: int, uuid: string] = (estimate, stickerPackPurchaseGasEstimate.uuid)
+  let result: tuple[estimate: int, uuid: string] = (estimate, arg.uuid)
   let resultPayload = Json.encode(result)
 
-  signal_handler(cast[pointer](stickerPackPurchaseGasEstimate.vptr), resultPayload, stickerPackPurchaseGasEstimate.slot)
+  signal_handler(cast[pointer](arg.vptr), resultPayload, arg.slot)
 
 proc stickerPackPurchaseGasEstimate*(self: StickersTasks, vptr: pointer, slot: string, packId: int, address: string, price: string, uuid: string) =
   let task = StickerPackPurchaseGasEstimate(vptr: cast[ByteAddress](vptr), slot: slot, packId: packId, address: address, price: price, uuid: uuid)
