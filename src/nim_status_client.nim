@@ -21,6 +21,8 @@ var signalsQObjPointer: pointer
 logScope:
   topics = "main"
 
+const debug {.booldefine.} = false
+
 proc mainProc() =
   let fleets =
     if defined(windows) and getEnv("NIM_STATUS_CLIENT_DEV").string == "":
@@ -65,6 +67,9 @@ proc mainProc() =
     i18nPath = joinPath(getAppDir(), "../i18n")
 
   let networkAccessFactory = newQNetworkAccessManagerFactory(TMPDIR & "netcache")
+
+  if(debug):
+    setupDebugger()
 
   let engine = newQQmlApplicationEngine()
   engine.setNetworkAccessManagerFactory(networkAccessFactory)

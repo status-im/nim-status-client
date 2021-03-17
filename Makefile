@@ -181,14 +181,15 @@ NIM_PARAMS += --outdir:./bin -d:debug
 CFLAGS += -g
 CXXFLAGS += -g
 
+# TODO: control debug/release builds with a Make var
 $(DOTHERSIDE): | deps
 	echo -e $(BUILD_MSG) "DOtherSide"
 	+ cd vendor/DOtherSide && \
 		mkdir -p build && \
 		cd build && \
 		rm -f CMakeCache.txt && \
-		cmake $(DOTHERSIDE_CMAKE_PARAMS)\
-			-DCMAKE_BUILD_TYPE=Release \
+		cmake $(DOTHERSIDE_CMAKE_PARAMS) \
+			-DCMAKE_BUILD_TYPE=Debug \
 			-DENABLE_DOCS=OFF \
 			-DENABLE_TESTS=OFF \
 			.. $(HANDLE_OUTPUT) && \
