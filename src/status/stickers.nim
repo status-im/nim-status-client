@@ -107,7 +107,7 @@ proc getInstalledStickerPacks*(self: StickersModel): Table[int, StickerPack] =
   self.installedStickerPacks = status_stickers.getInstalledStickerPacks()
   result = self.installedStickerPacks
 
-proc getAvailableStickerPacks*(self: StickersModel): Table[int, StickerPack] = status_stickers.getAvailableStickerPacks()
+proc getAvailableStickerPacks*(): Table[int, StickerPack] = status_stickers.getAvailableStickerPacks()
 
 proc getRecentStickers*(self: StickersModel): seq[Sticker] =
   result = status_stickers.getRecentStickers()

@@ -1,40 +1,50 @@
-import
-  chronos, NimQml, json_serialization, task_runner
+import # nim libs
+  tables
 
-import
-  ../stickers
+import # vendor libs
+  chronos, NimQml, json, json_serialization, task_runner
+
+import # status-desktop libs
+  ./common, ../libstatus/types, ../stickers
 
 type
-  StickerPackPurchaseGasEstimate* = object
-    vptr*: ByteAddress
-    slot*: string
+  StickerPackPurchaseGasEstimate* = ref object of BaseTask
     packId*: int
     address*: string
     price*: string
     uuid*: string
-  StickersTasks* = ref object
-    chanSendToPool: AsyncChannel[ThreadSafeString]
+  ObtainAvailableStickerPacks* = ref object of BaseTask
+  StickersTasks* = ref object of BaseTasks
 
 proc newStickersTasks*(chanSendToPool: AsyncChannel[ThreadSafeString]): StickersTasks =
   new(result)
   result.chanSendToPool = chanSendToPool
 
-proc runTask*(stickerPackPurchaseGasEstimate: StickerPackPurchaseGasEstimate) =
+proc run*(task: StickerPackPurchaseGasEstimate) =
   var success: bool
   var estimate = estimateGas(
-    stickerPackPurchaseGasEstimate.packId,
-    stickerPackPurchaseGasEstimate.address,
-    stickerPackPurchaseGasEstimate.price,
+    task.packId,
+    task.address,
+    task.price,
     success
   )
   if not success:
     estimate = 325000
-  let result: tuple[estimate: int, uuid: string] = (estimate, stickerPackPurchaseGasEstimate.uuid)
-  let resultPayload = Json.encode(result)
+  let result: tuple[estimate: int, uuid: string] = (estimate, task.uuid)
+  task.finish(result)
 
-  signal_handler(cast[pointer](stickerPackPurchaseGasEstimate.vptr), resultPayload, stickerPackPurchaseGasEstimate.slot)
+proc run*(task: ObtainAvailableStickerPacks) =
+  var success: bool
+  let availableStickerPacks = getAvailableStickerPacks()
+  var packs: seq[StickerPack] = @[]
+  for packId, stickerPack in availableStickerPacks.pairs:
+    packs.add(stickerPack)
+  task.finish(%*(packs))
 
 proc stickerPackPurchaseGasEstimate*(self: StickersTasks, vptr: pointer, slot: string, packId: int, address: string, price: string, uuid: string) =
   let task = StickerPackPurchaseGasEstimate(vptr: cast[ByteAddress](vptr), slot: slot, packId: packId, address: address, price: price, uuid: uuid)
-  let payload = task.toJson(typeAnnotations = true)
-  self.chanSendToPool.sendSync(payload.safe)
+  self.start(task)
+
+proc obtainAvailableStickerPacks*(self: StickersTasks, vptr: pointer, slot: string) =
+  let task = ObtainAvailableStickerPacks(vptr: cast[ByteAddress](vptr), slot: slot)
+  self.start(task)

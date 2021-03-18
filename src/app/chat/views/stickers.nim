@@ -65,12 +65,7 @@ QtObject:
       self.transactionWasSent(response)
 
   proc obtainAvailableStickerPacks*(self: StickersView) =
-    spawnAndSend(self, "setAvailableStickerPacks") do:
-      let availableStickerPacks = status_stickers.getAvailableStickerPacks()
-      var packs: seq[StickerPack] = @[]
-      for packId, stickerPack in availableStickerPacks.pairs:
-        packs.add(stickerPack)
-      $(%*(packs))
+    self.status.taskManager.threadPool.stickers.obtainAvailableStickerPacks(cast[pointer](self.vptr), "setAvailableStickerPacks")
 
   proc stickerPacksLoaded*(self: StickersView) {.signal.}
 

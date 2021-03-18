@@ -215,7 +215,7 @@ proc getStickers*(address: Address): string =
     if (purchasedStickerPacks.len == 0):
       return $(%*stickers)
     # TODO find a way to keep those in memory so as not to reload it each time
-    let availableStickerPacks = status_stickers.getAvailableStickerPacks()
+    let availableStickerPacks = getAvailableStickerPacks()
 
     var index = 0
     for stickerId in purchasedStickerPacks:

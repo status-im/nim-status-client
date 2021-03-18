@@ -3,7 +3,7 @@ import
   task_runner
 
 import
-  ./stickers
+  ./common, ./stickers
 export
   stickers
 
@@ -89,9 +89,12 @@ proc task(arg: TaskThreadArg) {.async.} =
 
     try:
       case messageType
-        of "StickerPackPurchaseGasEstimate":
+        of "StickerPackPurchaseGasEstimate:ObjectType":
           let decoded = Json.decode(received, StickerPackPurchaseGasEstimate, allowUnknownFields = true)
-          decoded.runTask()
+          decoded.run()
+        of "ObtainAvailableStickerPacks:ObjectType":
+          let decoded = Json.decode(received, ObtainAvailableStickerPacks, allowUnknownFields = true)
+          decoded.run()
         else:
           error "[threadpool task thread] unknown message", message=received
     except Exception as e:
