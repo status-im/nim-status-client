@@ -66,6 +66,22 @@ proc init*(self: ThreadPool) =
   # block until we receive "ready"
   discard $(self.chanRecvFromPool.recvSync())
 
+
+# MOVE TO COMMON:
+proc decode*[T](encodedArg: string): TaskArg =
+  TaskArg(Json.decode(encodedArg, T, allowUnknownFields = true))
+
+proc id*[T](): TaskArgDecoder =
+  decode[T]
+
+proc start*[T: TaskArg](self: Threadpool, task: T) =
+  let payload = task.toJson(typeAnnotations = true)
+  self.chanSendToPool.sendSync(payload.safe)
+
+proc finish*[T](task: TaskArg, payload: T) =
+  let resultPayload = Json.encode(payload)
+  signal_handler(cast[pointer](task.vptr), resultPayload, task.slot)
+
 proc teardown*(self: ThreadPool) =
   self.chanSendToPool.sendSync("shutdown".safe)
   self.chanRecvFromPool.close()

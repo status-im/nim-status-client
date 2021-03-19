@@ -11,28 +11,33 @@ logScope:
   topics = "stickers-view"
 
 type
-  DoStuffTaskArg = ref object of TaskArg
-    message: string
+  EstimateGasArg = ref object of TaskArg
+    packId: int
+    address: string
+    price: string
+    uuid: string
 
 proc doStuffTask(arg: TaskArg) =
-  # let argc = cast[DoStuffTaskArg](arg)
-  let argc = DoStuffTaskArg(arg)
-  echo "THREADPOOL TASK IS PRINTING: " & argc.message
-  signal_handler(cast[pointer](argc.vptr), argc.message, argc.slot)
+  # let argc = cast[EstimateGasArg](arg)
+  let argc = EstimateGasArg(arg)
+  echo "THREADPOOL TASK IS PRINTING: " & argc.address
+  argc.finish(argc.address)
+  # signal_handler(cast[pointer](argc.vptr), argc.address, argc.slot)
 
-proc doStuffTaskArgDecoder(encodedArg: string): TaskArg =
-  # cast[TaskArg](Json.decode(encodedArg, DoStuffTaskArg,
-  #   allowUnknownFields = true))
-  TaskArg(Json.decode(encodedArg, DoStuffTaskArg, allowUnknownFields = true))
+# proc doStuffTaskArgDecoder(encodedArg: string): TaskArg =
+#   # cast[TaskArg](Json.decode(encodedArg, EstimateGasArg,
+#   #   allowUnknownFields = true))
+#   TaskArg(Json.decode(encodedArg, EstimateGasArg, allowUnknownFields = true))
 
-proc doStuffTaskId(): TaskArgDecoder =
-  doStuffTaskArgDecoder
+# proc doStuffTaskId(): TaskArgDecoder =
+#   doStuffTaskArgDecoder
 
-proc doStuff(pool: ThreadPool, vptr: pointer, slot: string, message: string) =
-  let taskArg = DoStuffTaskArg(id: cast[ByteAddress](doStuffTaskId),
-    vptr: cast[ByteAddress](vptr), slot: slot, message: message)
-  let payload = taskArg.toJson(typeAnnotations = true)
-  pool.chanSendToPool.sendSync(payload.safe)
+proc doStuff(pool: ThreadPool, vptr: pointer, slot: string, packId: int, address: string, price: string, uuid: string) =
+  let taskArg = EstimateGasArg(id: cast[ByteAddress](id[EstimateGasArg]),
+    vptr: cast[ByteAddress](vptr), slot: slot, packId: packId, address: address, price: price, uuid: uuid)
+  pool.start(taskArg)
+  # let payload = taskArg.toJson(typeAnnotations = true)
+  # pool.chanSendToPool.sendSync(payload.safe)
 
 QtObject:
   type StickersView* = ref object of QObject
@@ -56,7 +61,8 @@ QtObject:
     result.activeChannel = activeChannel
     result.setup
 
-    result.status.taskManager.threadPool.registerTask(doStuffTaskId, doStuffTask)
+    # result.status.taskManager.threadPool.registerTask(doStuffTaskId, doStuffTask)
+    result.status.taskManager.threadPool.registerTask(id[EstimateGasArg], doStuffTask)
 
   proc addStickerPackToList*(self: StickersView, stickerPack: StickerPack, isInstalled, isBought, isPending: bool) =
     self.stickerPacks.addStickerPackToList(stickerPack, newStickerList(stickerPack.stickers), isInstalled, isBought, isPending)
@@ -73,7 +79,7 @@ QtObject:
 
   proc estimate*(self: StickersView, packId: int, address: string, price: string, uuid: string) {.slot.} =
     self.status.taskManager.threadPool.stickers.stickerPackPurchaseGasEstimate(cast[pointer](self.vptr), "setGasEstimate", packId, address, price, uuid)
-    doStuff(self.status.taskManager.threadPool, cast[pointer](self.vptr), "didStuff", address)
+    doStuff(self.status.taskManager.threadPool, cast[pointer](self.vptr), "didStuff", packId, address, price, uuid)
 
   proc didStuff*(self: StickersView, message: string) {.slot.} =
     echo "MAIN THREAD SLOT IS PRINTING: " & message
