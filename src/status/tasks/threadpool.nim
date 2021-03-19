@@ -1,16 +1,23 @@
 import
-  chronicles, chronos, json, json_serialization, NimQml, sequtils, tables,
-  task_runner
+  chronicles, chronos, json, json_serialization, NimQml, sequtils, sharedtables,
+  tables, task_runner
 
 import
   ./common, ./stickers
 export
-  stickers
+  chronos, common, stickers
 
 logScope:
   topics = "task-threadpool"
 
 type
+  TaskArg* = ref object of RootObj
+    id*: ByteAddress
+    vptr*: ByteAddress
+    slot*: string
+  Task* = proc(arg: TaskArg): void {.gcsafe, nimcall.}
+  TaskArgDecoder* = proc(encodedArg: string): TaskArg {.gcsafe, nimcall.}
+  TaskId* = proc(): TaskArgDecoder {.gcsafe, nimcall.}
   ThreadPool* = ref object
     chanRecvFromPool*: AsyncChannel[ThreadSafeString]
     chanSendToPool*: AsyncChannel[ThreadSafeString]
@@ -28,12 +35,15 @@ type
   ThreadNotification = object
     id: int
     notice: string
-  
 
 # forward declarations
 proc poolThread(arg: PoolThreadArg) {.thread.}
 
 const MaxThreadPoolSize = 16
+
+var registeredTasks: SharedTable[TaskId, Task]
+
+init[TaskId, Task](registeredTasks, sharedtables.rightSize(32))
 
 proc newThreadPool*(size: int = MaxThreadPoolSize): ThreadPool =
   new(result)
@@ -54,15 +64,20 @@ proc init*(self: ThreadPool) =
   createThread(self.thread, poolThread, arg)
 
   # block until we receive "ready"
-  let received = $(self.chanRecvFromPool.recvSync())
+  discard $(self.chanRecvFromPool.recvSync())
 
 proc teardown*(self: ThreadPool) =
   self.chanSendToPool.sendSync("shutdown".safe)
   self.chanRecvFromPool.close()
   self.chanSendToPool.close()
   joinThread(self.thread)
+  # deinitSharedTable[TaskId, Task](registeredTasks)
 
-proc task(arg: TaskThreadArg) {.async.} =
+proc registerTask*(self: ThreadPool, id: TaskId, task: Task) =
+  discard sharedtables.hasKeyOrPut[TaskId, Task](
+    registeredTasks, id, task)
+
+proc runner(arg: TaskThreadArg) {.async.} =
   arg.chanRecvFromPool.open()
   arg.chanSendToPool.open()
 
@@ -96,7 +111,14 @@ proc task(arg: TaskThreadArg) {.async.} =
           let decoded = Json.decode(received, ObtainAvailableStickerPacks, allowUnknownFields = true)
           decoded.run()
         else:
-          error "[threadpool task thread] unknown message", message=received
+          try:
+            let
+              key = cast[TaskId](jsonNode{"id"}.getInt)
+              task = sharedtables.mget[TaskId, Task](registeredTasks, key)
+              decode = key()
+            task(decode(received))
+          except Exception as e:
+            error "[threadpool task thread] unknown message", message=received, error=e.msg
     except Exception as e:
       error "[threadpool task thread] exception", error=e.msg
 
@@ -109,7 +131,7 @@ proc task(arg: TaskThreadArg) {.async.} =
   arg.chanSendToPool.close()
 
 proc taskThread(arg: TaskThreadArg) {.thread.} =
-  waitFor task(arg)
+  waitFor runner(arg)
 
 proc pool(arg: PoolThreadArg) {.async.} =
   let
