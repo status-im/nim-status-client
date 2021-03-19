@@ -33,7 +33,7 @@ proc doStuffTask(arg: TaskArg) =
 #   doStuffTaskArgDecoder
 
 proc doStuff(pool: ThreadPool, vptr: pointer, slot: string, packId: int, address: string, price: string, uuid: string) =
-  let taskArg = EstimateGasArg(id: cast[ByteAddress](id[EstimateGasArg]),
+  let taskArg = EstimateGasArg(id: cast[ByteAddress](TaskId(id[EstimateGasArg])),
     vptr: cast[ByteAddress](vptr), slot: slot, packId: packId, address: address, price: price, uuid: uuid)
   pool.start(taskArg)
   # let payload = taskArg.toJson(typeAnnotations = true)
@@ -62,7 +62,7 @@ QtObject:
     result.setup
 
     # result.status.taskManager.threadPool.registerTask(doStuffTaskId, doStuffTask)
-    result.status.taskManager.threadPool.registerTask(id[EstimateGasArg], doStuffTask)
+    result.status.taskManager.threadPool.registerTask(TaskId(id[EstimateGasArg]), doStuffTask)
 
   proc addStickerPackToList*(self: StickersView, stickerPack: StickerPack, isInstalled, isBought, isPending: bool) =
     self.stickerPacks.addStickerPackToList(stickerPack, newStickerList(stickerPack.stickers), isInstalled, isBought, isPending)
