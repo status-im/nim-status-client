@@ -11,14 +11,14 @@ logScope:
 
 type
   TaskManager* = ref object
-    threadPool*: ThreadPool
+    threadpool*: ThreadPool
 
 proc newTaskManager*(): TaskManager =
   new(result)
-  result.threadPool = newThreadPool()
+  result.threadpool = newThreadPool()
 
 proc init*(self: TaskManager) =
-  self.threadPool.init()
+  self.threadpool.init()
 
 proc teardown*(self: TaskManager) =
-  self.threadPool.teardown()
+  self.threadpool.teardown()

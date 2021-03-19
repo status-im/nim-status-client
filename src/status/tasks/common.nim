@@ -8,11 +8,10 @@ type
     vptr*: ByteAddress
     slot*: string
   TaskArg* = ref object of RootObj
-    taskid*: ByteAddress
+    taskPtr*: ByteAddress
     vptr*: ByteAddress
     slot*: string
-  Task* = proc(arg: TaskArg): void {.gcsafe, nimcall.}
-  TaskArgDecoder* = proc(encodedArg: string): TaskArg {.gcsafe, nimcall.}
+  Task* = proc(arg: string): void {.gcsafe, nimcall.}
 
 proc start*[T: BaseTask](self: BaseTasks, task: T) =
   let payload = task.toJson(typeAnnotations = true)

@@ -14,17 +14,16 @@ type
   DoStuffTaskArg = ref object of TaskArg
     message: string
 
-proc doStuffTask(arg: TaskArg) =
-  let argc = cast[DoStuffTaskArg](arg)
-  echo "THREADPOOL TASK IS PRINTING: " & argc.message
-  signal_handler(cast[pointer](argc.vptr), argc.message, argc.slot)
+proc doStuffTaskArgDecoder(encodedArg: string): DoStuffTaskArg =
+  Json.decode(encodedArg, DoStuffTaskArg, allowUnknownFields = true)
 
-proc doStuffTaskArgDecoder(encodedArg: string): TaskArg =
-  cast[TaskArg](Json.decode(encodedArg, DoStuffTaskArg,
-    allowUnknownFields = true))
+proc doStuffTask(argEncoded: string) =
+  let arg = doStuffTaskArgDecoder(argEncoded)
+  echo "THREADPOOL TASK IS PRINTING: " & arg.message
+  signal_handler(cast[pointer](arg.vptr), arg.message, arg.slot)
 
 proc doStuff(pool: ThreadPool, vptr: pointer, slot: string, message: string) =
-  let taskArg = DoStuffTaskArg(taskid: cast[ByteAddress](doStuffTaskArgDecoder),
+  let taskArg = DoStuffTaskArg(taskPtr: cast[ByteAddress](doStuffTask),
     vptr: cast[ByteAddress](vptr), slot: slot, message: message)
   let payload = taskArg.toJson(typeAnnotations = true)
   pool.chanSendToPool.sendSync(payload.safe)
@@ -51,9 +50,6 @@ QtObject:
     result.activeChannel = activeChannel
     result.setup
 
-    result.status.taskManager.threadPool.registerTask(doStuffTaskArgDecoder,
-      doStuffTask)
-
   proc addStickerPackToList*(self: StickersView, stickerPack: StickerPack, isInstalled, isBought, isPending: bool) =
     self.stickerPacks.addStickerPackToList(stickerPack, newStickerList(stickerPack.stickers), isInstalled, isBought, isPending)
 
@@ -68,8 +64,8 @@ QtObject:
   proc transactionCompleted*(self: StickersView, success: bool, txHash: string, revertReason: string = "") {.signal.}
 
   proc estimate*(self: StickersView, packId: int, address: string, price: string, uuid: string) {.slot.} =
-    self.status.taskManager.threadPool.stickers.stickerPackPurchaseGasEstimate(cast[pointer](self.vptr), "setGasEstimate", packId, address, price, uuid)
-    doStuff(self.status.taskManager.threadPool, cast[pointer](self.vptr), "didStuff", address)
+    self.status.taskManager.threadpool.stickers.stickerPackPurchaseGasEstimate(cast[pointer](self.vptr), "setGasEstimate", packId, address, price, uuid)
+    doStuff(self.status.taskManager.threadpool, cast[pointer](self.vptr), "didStuff", address)
 
   proc didStuff*(self: StickersView, message: string) {.slot.} =
     echo "MAIN THREAD SLOT IS PRINTING: " & message
@@ -91,7 +87,7 @@ QtObject:
       self.transactionWasSent(response)
 
   proc obtainAvailableStickerPacks*(self: StickersView) =
-    self.status.taskManager.threadPool.stickers.obtainAvailableStickerPacks(cast[pointer](self.vptr), "setAvailableStickerPacks")
+    self.status.taskManager.threadpool.stickers.obtainAvailableStickerPacks(cast[pointer](self.vptr), "setAvailableStickerPacks")
 
   proc stickerPacksLoaded*(self: StickersView) {.signal.}
 

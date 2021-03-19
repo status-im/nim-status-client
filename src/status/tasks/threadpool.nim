@@ -1,5 +1,5 @@
 import # std libs
-  json, sequtils, sharedtables, tables
+  json, sequtils, tables
 
 import # vendor libs
   chronicles, chronos, json_serialization, NimQml, task_runner
@@ -37,10 +37,6 @@ proc poolThread(arg: PoolThreadArg) {.thread.}
 
 const MaxThreadPoolSize = 16
 
-var registeredTasks: SharedTable[TaskArgDecoder, Task]
-
-init[TaskArgDecoder, Task](registeredTasks, sharedtables.rightSize(32))
-
 proc newThreadPool*(size: int = MaxThreadPoolSize): ThreadPool =
   new(result)
   result.chanRecvFromPool = newAsyncChannel[ThreadSafeString](-1)
@@ -66,11 +62,6 @@ proc teardown*(self: ThreadPool) =
   self.chanRecvFromPool.close()
   self.chanSendToPool.close()
   joinThread(self.thread)
-  deinitSharedTable[TaskArgDecoder, Task](registeredTasks)
-
-proc registerTask*(self: ThreadPool, taskid: TaskArgDecoder, task: Task) =
-  discard sharedtables.hasKeyOrPut[TaskArgDecoder, Task](
-    registeredTasks, taskid, task)
 
 proc runner(arg: TaskThreadArg) {.async.} =
   arg.chanRecvFromPool.open()
@@ -107,11 +98,8 @@ proc runner(arg: TaskThreadArg) {.async.} =
           decoded.run()
         else:
           try:
-            let
-              decoder = cast[TaskArgDecoder](jsonNode{"taskid"}.getInt)
-              task = sharedtables.mget[TaskArgDecoder, Task](registeredTasks,
-                decoder)
-            task(decoder(received))
+            let task = cast[Task](jsonNode{"taskPtr"}.getInt)
+            task(received)
           except Exception as e:
             error "[threadpool task thread] unknown message", message=received, error=e.msg
     except Exception as e:
