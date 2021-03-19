@@ -4,7 +4,7 @@ import # vendor libs
 import # status-desktop libs
   ./threadpool
 
-export threadpool
+export task_runner, threadpool
 
 logScope:
   topics = "task-manager"
@@ -22,6 +22,3 @@ proc init*(self: TaskManager) =
 
 proc teardown*(self: TaskManager) =
   self.threadPool.teardown()
-
-
-
