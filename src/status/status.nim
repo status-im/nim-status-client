@@ -22,11 +22,11 @@ type Status* = ref object
   network*: NetworkModel
   stickers*: StickersModel
   permissions*: PermissionsModel
-  taskManager*: TaskManager
+  tasks*: TaskManager
 
-proc newStatusInstance*(taskManager: TaskManager, fleetConfig: string): Status =
+proc newStatusInstance*(fleetConfig: string): Status =
   result = Status()
-  result.taskManager = taskManager
+  result.tasks = newTaskManager()
   result.events = createEventEmitter()
   result.fleet = fleet.newFleetModel(result.events, fleetConfig)
   result.chat = chat.newChatModel(result.events)
@@ -42,7 +42,8 @@ proc newStatusInstance*(taskManager: TaskManager, fleetConfig: string): Status =
   result.stickers = stickers.newStickersModel(result.events)
   result.permissions = permissions.newPermissionsModel(result.events)
 
-proc initNode*(self: Status) = 
+proc initNode*(self: Status) =
+  self.tasks.init()
   libstatus_accounts.initNode()
 
 proc startMessenger*(self: Status) =
@@ -51,7 +52,7 @@ proc startMessenger*(self: Status) =
 proc reset*(self: Status) =
   # TODO: remove this once accounts are not tracked in the AccountsModel
   self.accounts.reset()
-  
+
   # NOT NEEDED self.chat.reset()
   # NOT NEEDED self.wallet.reset()
   # NOT NEEDED self.node.reset()

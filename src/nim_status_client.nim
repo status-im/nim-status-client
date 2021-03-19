@@ -30,9 +30,7 @@ proc mainProc() =
     else:
       "/../fleets.json"
 
-  let taskManager = newTaskManager()
-  taskManager.init()
-  let status = statuslib.newStatusInstance(taskManager, readFile(joinPath(getAppDir(), fleets)))
+  let status = statuslib.newStatusInstance(readFile(joinPath(getAppDir(), fleets)))
   status.initNode()
 
   enableHDPI()
@@ -157,7 +155,7 @@ proc mainProc() =
     profile.delete()
     utilsController.delete()
     browserController.delete()
-    taskManager.teardown()
+    status.tasks.teardown()
 
 
   # Initialize only controllers whose init functions

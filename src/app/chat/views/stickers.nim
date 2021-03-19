@@ -64,8 +64,8 @@ QtObject:
   proc transactionCompleted*(self: StickersView, success: bool, txHash: string, revertReason: string = "") {.signal.}
 
   proc estimate*(self: StickersView, packId: int, address: string, price: string, uuid: string) {.slot.} =
-    self.status.taskManager.threadpool.stickers.stickerPackPurchaseGasEstimate(cast[pointer](self.vptr), "setGasEstimate", packId, address, price, uuid)
-    doStuff(self.status.taskManager.threadpool, cast[pointer](self.vptr), "didStuff", address)
+    self.status.tasks.threadpool.stickers.stickerPackPurchaseGasEstimate(cast[pointer](self.vptr), "setGasEstimate", packId, address, price, uuid)
+    doStuff(self.status.tasks.threadpool, cast[pointer](self.vptr), "didStuff", address)
 
   proc didStuff*(self: StickersView, message: string) {.slot.} =
     echo "MAIN THREAD SLOT IS PRINTING: " & message
@@ -87,7 +87,7 @@ QtObject:
       self.transactionWasSent(response)
 
   proc obtainAvailableStickerPacks*(self: StickersView) =
-    self.status.taskManager.threadpool.stickers.obtainAvailableStickerPacks(cast[pointer](self.vptr), "setAvailableStickerPacks")
+    self.status.tasks.threadpool.stickers.obtainAvailableStickerPacks(cast[pointer](self.vptr), "setAvailableStickerPacks")
 
   proc stickerPacksLoaded*(self: StickersView) {.signal.}
 
