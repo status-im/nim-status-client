@@ -1,4 +1,4 @@
-import
+import # vendor libs
   json_serialization, NimQml, task_runner
 
 type
@@ -7,6 +7,12 @@ type
   BaseTask* = ref object of RootObj
     vptr*: ByteAddress
     slot*: string
+  TaskArg* = ref object of RootObj
+    taskid*: ByteAddress
+    vptr*: ByteAddress
+    slot*: string
+  Task* = proc(arg: TaskArg): void {.gcsafe, nimcall.}
+  TaskArgDecoder* = proc(encodedArg: string): TaskArg {.gcsafe, nimcall.}
 
 proc start*[T: BaseTask](self: BaseTasks, task: T) =
   let payload = task.toJson(typeAnnotations = true)

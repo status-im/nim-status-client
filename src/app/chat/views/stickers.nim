@@ -15,21 +15,16 @@ type
     message: string
 
 proc doStuffTask(arg: TaskArg) =
-  # let argc = cast[DoStuffTaskArg](arg)
-  let argc = DoStuffTaskArg(arg)
+  let argc = cast[DoStuffTaskArg](arg)
   echo "THREADPOOL TASK IS PRINTING: " & argc.message
   signal_handler(cast[pointer](argc.vptr), argc.message, argc.slot)
 
 proc doStuffTaskArgDecoder(encodedArg: string): TaskArg =
-  # cast[TaskArg](Json.decode(encodedArg, DoStuffTaskArg,
-  #   allowUnknownFields = true))
-  TaskArg(Json.decode(encodedArg, DoStuffTaskArg, allowUnknownFields = true))
-
-proc doStuffTaskId(): TaskArgDecoder =
-  doStuffTaskArgDecoder
+  cast[TaskArg](Json.decode(encodedArg, DoStuffTaskArg,
+    allowUnknownFields = true))
 
 proc doStuff(pool: ThreadPool, vptr: pointer, slot: string, message: string) =
-  let taskArg = DoStuffTaskArg(id: cast[ByteAddress](doStuffTaskId),
+  let taskArg = DoStuffTaskArg(taskid: cast[ByteAddress](doStuffTaskArgDecoder),
     vptr: cast[ByteAddress](vptr), slot: slot, message: message)
   let payload = taskArg.toJson(typeAnnotations = true)
   pool.chanSendToPool.sendSync(payload.safe)
@@ -56,7 +51,8 @@ QtObject:
     result.activeChannel = activeChannel
     result.setup
 
-    result.status.taskManager.threadPool.registerTask(doStuffTaskId, doStuffTask)
+    result.status.taskManager.threadPool.registerTask(doStuffTaskArgDecoder,
+      doStuffTask)
 
   proc addStickerPackToList*(self: StickersView, stickerPack: StickerPack, isInstalled, isBought, isPending: bool) =
     self.stickerPacks.addStickerPackToList(stickerPack, newStickerList(stickerPack.stickers), isInstalled, isBought, isPending)
