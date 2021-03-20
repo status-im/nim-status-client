@@ -5,7 +5,7 @@ import ../../../status/libstatus/stickers as status_stickers
 import ../../../status/libstatus/wallet as status_wallet
 import sticker_pack_list, sticker_list, chat_item
 import json_serialization
-import ../../../status/tasks/[qt, task_manager]
+import ../../../status/tasks/[qt, task_runner_impl]
 
 logScope:
   topics = "stickers-view"

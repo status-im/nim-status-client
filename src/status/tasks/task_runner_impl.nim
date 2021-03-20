@@ -7,18 +7,18 @@ import # status-desktop libs
 export task_runner, threadpool
 
 logScope:
-  topics = "task-manager"
+  topics = "task-runner"
 
 type
-  TaskManager* = ref object
+  TaskRunner* = ref object
     threadpool*: ThreadPool
 
-proc newTaskManager*(): TaskManager =
+proc newTaskRunner*(): TaskRunner =
   new(result)
   result.threadpool = newThreadPool()
 
-proc init*(self: TaskManager) =
+proc init*(self: TaskRunner) =
   self.threadpool.init()
 
-proc teardown*(self: TaskManager) =
+proc teardown*(self: TaskRunner) =
   self.threadpool.teardown()
