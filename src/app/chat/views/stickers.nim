@@ -14,19 +14,16 @@ type
   DoStuffTaskArg = ref object of TaskArg
     message: string
 
-proc doStuffTaskArgDecoder(encodedArg: string): DoStuffTaskArg =
-  Json.decode(encodedArg, DoStuffTaskArg, allowUnknownFields = true)
-
 const doStuffTask: Task = proc(argEncoded: string) =
-  let arg = doStuffTaskArgDecoder(argEncoded)
+  let arg = taskArgDecoder[DoStuffTaskArg](argEncoded)
   echo "THREADPOOL TASK IS PRINTING: " & arg.message
   signal_handler(cast[pointer](arg.vptr), arg.message, arg.slot)
 
 proc doStuff(pool: ThreadPool, vptr: pointer, slot: string, message: string) =
-  let taskArg = DoStuffTaskArg(taskPtr: cast[ByteAddress](doStuffTask),
+  let arg = DoStuffTaskArg(taskPtr: cast[ByteAddress](doStuffTask),
     vptr: cast[ByteAddress](vptr), slot: slot, message: message)
-  let payload = taskArg.toJson(typeAnnotations = true)
-  pool.chanSendToPool.sendSync(payload.safe)
+  let argEncoded = taskArgEncoder[DoStuffTaskArg](arg)
+  pool.chanSendToPool.sendSync(argEncoded.safe)
 
 QtObject:
   type StickersView* = ref object of QObject

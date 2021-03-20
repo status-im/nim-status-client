@@ -20,3 +20,9 @@ proc start*[T: BaseTask](self: BaseTasks, task: T) =
 proc finish*[T](task: BaseTask, payload: T) =
   let resultPayload = Json.encode(payload)
   signal_handler(cast[pointer](task.vptr), resultPayload, task.slot)
+
+proc taskArgDecoder*[T](arg: string): T =
+  Json.decode(arg, T, allowUnknownFields = true)
+
+proc taskArgEncoder*[T](arg: T): string =
+  arg.toJson(typeAnnotations = true)
