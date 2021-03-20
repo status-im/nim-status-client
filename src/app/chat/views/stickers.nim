@@ -5,13 +5,13 @@ import ../../../status/libstatus/stickers as status_stickers
 import ../../../status/libstatus/wallet as status_wallet
 import sticker_pack_list, sticker_list, chat_item
 import json_serialization
-import ../../../status/tasks/task_manager
+import ../../../status/tasks/[qt, task_manager]
 
 logScope:
   topics = "stickers-view"
 
 type
-  DoStuffTaskArg = ref object of TaskArg
+  DoStuffTaskArg = ref object of QObjectTaskArg
     message: string
 
 const doStuffTask: Task = proc(argEncoded: string) =
@@ -19,11 +19,14 @@ const doStuffTask: Task = proc(argEncoded: string) =
   echo "THREADPOOL TASK IS PRINTING: " & arg.message
   signal_handler(cast[pointer](arg.vptr), arg.message, arg.slot)
 
-proc doStuff(pool: ThreadPool, vptr: pointer, slot: string, message: string) =
-  let arg = DoStuffTaskArg(taskPtr: cast[ByteAddress](doStuffTask),
-    vptr: cast[ByteAddress](vptr), slot: slot, message: message)
+# the [T] here is annoying but the QtObject template only allows for one type
+# definition so we'll need to setup the type, task, and helper outside of body
+# passed to `QtObject:`
+proc doStuff[T](self: T, message: string) =
+  let arg = DoStuffTaskArg(tptr: cast[ByteAddress](doStuffTask),
+    vptr: cast[ByteAddress](self.vptr), slot: "didStuff", message: message)
   let argEncoded = taskArgEncoder[DoStuffTaskArg](arg)
-  pool.chanSendToPool.sendSync(argEncoded.safe)
+  self.status.tasks.threadpool.chanSendToPool.sendSync(argEncoded.safe)
 
 QtObject:
   type StickersView* = ref object of QObject
@@ -62,7 +65,7 @@ QtObject:
 
   proc estimate*(self: StickersView, packId: int, address: string, price: string, uuid: string) {.slot.} =
     self.status.tasks.threadpool.stickers.stickerPackPurchaseGasEstimate(cast[pointer](self.vptr), "setGasEstimate", packId, address, price, uuid)
-    doStuff(self.status.tasks.threadpool, cast[pointer](self.vptr), "didStuff", address)
+    doStuff[StickersView](self, address)
 
   proc didStuff*(self: StickersView, message: string) {.slot.} =
     echo "MAIN THREAD SLOT IS PRINTING: " & message

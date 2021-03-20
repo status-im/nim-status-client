@@ -8,9 +8,7 @@ type
     vptr*: ByteAddress
     slot*: string
   TaskArg* = ref object of RootObj
-    taskPtr*: ByteAddress
-    vptr*: ByteAddress
-    slot*: string
+    tptr*: ByteAddress
   Task* = proc(arg: string): void {.gcsafe, nimcall.}
 
 proc start*[T: BaseTask](self: BaseTasks, task: T) =

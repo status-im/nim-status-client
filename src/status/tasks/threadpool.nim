@@ -98,7 +98,7 @@ proc runner(arg: TaskThreadArg) {.async.} =
           decoded.run()
         else:
           try:
-            let task = cast[Task](jsonNode{"taskPtr"}.getInt)
+            let task = cast[Task](jsonNode{"tptr"}.getInt)
             task(received)
           except Exception as e:
             error "[threadpool task thread] unknown message", message=received, error=e.msg
