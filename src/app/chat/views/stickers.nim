@@ -17,7 +17,7 @@ type
 proc doStuffTaskArgDecoder(encodedArg: string): DoStuffTaskArg =
   Json.decode(encodedArg, DoStuffTaskArg, allowUnknownFields = true)
 
-proc doStuffTask(argEncoded: string) =
+const doStuffTask: Task = proc(argEncoded: string) =
   let arg = doStuffTaskArgDecoder(argEncoded)
   echo "THREADPOOL TASK IS PRINTING: " & arg.message
   signal_handler(cast[pointer](arg.vptr), arg.message, arg.slot)
