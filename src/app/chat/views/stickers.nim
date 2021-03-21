@@ -18,7 +18,14 @@ type
     uuid: string
   DoObtainAvailableStickerPacksTaskArg = ref object of QObjectTaskArg
 
-const doEstimateTask: Task = proc(argEncoded: string) =
+# var xyz = @["a", "b", "c"]
+
+# The pragmas `{.gcsafe, nimcall.}` in this context do not force the compiler
+# to accept unsafe code, rather they work in conjunction with the proc
+# signature for `type Task` in tasks/common.nim to ensure that the proc really
+# is gcsafe and that a helpful error message is displayed
+proc doEstimateTask(argEncoded: string) {.gcsafe, nimcall.} =
+  # echo $xyz
   let arg = taskArgDecoder[DoEstimateTaskArg](argEncoded)
   var success: bool
   var estimate = estimateGas(arg.packId, arg.address, arg.price,
@@ -39,7 +46,8 @@ proc doEstimate[T](self: T, packId: int, address: string, price: string,
   let argEncoded = taskArgEncoder[DoEstimateTaskArg](arg)
   self.status.tasks.threadpool.chanSendToPool.sendSync(argEncoded.safe)
 
-const doObtainAvailableStickerPacksTask: Task = proc(argEncoded: string) =
+proc doObtainAvailableStickerPacksTask(argEncoded: string) {.gcsafe, nimcall.} =
+  # echo $xyz
   let arg = taskArgDecoder[DoObtainAvailableStickerPacksTaskArg](argEncoded)
   let availableStickerPacks = status_stickers.getAvailableStickerPacks()
   var packs: seq[StickerPack] = @[]
