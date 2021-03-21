@@ -11,21 +11,47 @@ logScope:
   topics = "stickers-view"
 
 type
-  DoStuffTaskArg = ref object of QObjectTaskArg
-    message: string
+  DoEstimateTaskArg = ref object of QObjectTaskArg
+    packId: int
+    address: string
+    price: string
+    uuid: string
+  DoObtainAvailableStickerPacksTaskArg = ref object of QObjectTaskArg
 
-const doStuffTask: Task = proc(argEncoded: string) =
-  let arg = taskArgDecoder[DoStuffTaskArg](argEncoded)
-  echo "THREADPOOL TASK IS PRINTING: " & arg.message
-  signal_handler(cast[pointer](arg.vptr), arg.message, arg.slot)
+const doEstimateTask: Task = proc(argEncoded: string) =
+  let arg = taskArgDecoder[DoEstimateTaskArg](argEncoded)
+  var success: bool
+  var estimate = estimateGas(arg.packId, arg.address, arg.price,
+    success)
+  if not success:
+    estimate = 325000
+  let tpl: tuple[estimate: int, uuid: string] = (estimate, arg.uuid)
+  signal_handler(cast[pointer](arg.vptr), Json.encode(tpl), arg.slot)
 
 # the [T] here is annoying but the QtObject template only allows for one type
 # definition so we'll need to setup the type, task, and helper outside of body
 # passed to `QtObject:`
-proc doStuff[T](self: T, message: string) =
-  let arg = DoStuffTaskArg(tptr: cast[ByteAddress](doStuffTask),
-    vptr: cast[ByteAddress](self.vptr), slot: "didStuff", message: message)
-  let argEncoded = taskArgEncoder[DoStuffTaskArg](arg)
+proc doEstimate[T](self: T, packId: int, address: string, price: string,
+                   uuid: string) =
+  let arg = DoEstimateTaskArg(tptr: cast[ByteAddress](doEstimateTask),
+    vptr: cast[ByteAddress](self.vptr), slot: "setGasEstimate", packId: packId,
+    address: address, price: price, uuid: uuid)
+  let argEncoded = taskArgEncoder[DoEstimateTaskArg](arg)
+  self.status.tasks.threadpool.chanSendToPool.sendSync(argEncoded.safe)
+
+const doObtainAvailableStickerPacksTask: Task = proc(argEncoded: string) =
+  let arg = taskArgDecoder[DoObtainAvailableStickerPacksTaskArg](argEncoded)
+  let availableStickerPacks = status_stickers.getAvailableStickerPacks()
+  var packs: seq[StickerPack] = @[]
+  for packId, stickerPack in availableStickerPacks.pairs:
+    packs.add(stickerPack)
+  signal_handler(cast[pointer](arg.vptr), Json.encode(%*(packs)), arg.slot)
+
+proc doObtainAvailableStickerPacks[T](self: T) =
+  let arg = DoObtainAvailableStickerPacksTaskArg(
+    tptr: cast[ByteAddress](doObtainAvailableStickerPacksTask),
+    vptr: cast[ByteAddress](self.vptr), slot: "setAvailableStickerPacks")
+  let argEncoded = taskArgEncoder[DoObtainAvailableStickerPacksTaskArg](arg)
   self.status.tasks.threadpool.chanSendToPool.sendSync(argEncoded.safe)
 
 QtObject:
@@ -64,11 +90,7 @@ QtObject:
   proc transactionCompleted*(self: StickersView, success: bool, txHash: string, revertReason: string = "") {.signal.}
 
   proc estimate*(self: StickersView, packId: int, address: string, price: string, uuid: string) {.slot.} =
-    self.status.tasks.threadpool.stickers.stickerPackPurchaseGasEstimate(cast[pointer](self.vptr), "setGasEstimate", packId, address, price, uuid)
-    doStuff[StickersView](self, address)
-
-  proc didStuff*(self: StickersView, message: string) {.slot.} =
-    echo "MAIN THREAD SLOT IS PRINTING: " & message
+    doEstimate[StickersView](self, packId, address, price, uuid)
 
   proc gasEstimateReturned*(self: StickersView, estimate: int, uuid: string) {.signal.}
 
@@ -87,7 +109,7 @@ QtObject:
       self.transactionWasSent(response)
 
   proc obtainAvailableStickerPacks*(self: StickersView) =
-    self.status.tasks.threadpool.stickers.obtainAvailableStickerPacks(cast[pointer](self.vptr), "setAvailableStickerPacks")
+    doObtainAvailableStickerPacks[StickersView](self)
 
   proc stickerPacksLoaded*(self: StickersView) {.signal.}
 

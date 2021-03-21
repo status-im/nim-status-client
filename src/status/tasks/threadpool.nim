@@ -5,10 +5,10 @@ import # vendor libs
   chronicles, chronos, json_serialization, NimQml, task_runner
 
 import # status-desktop libs
-  ./common, ./stickers
+  ./common
 
 export
-  chronos, common, stickers
+  chronos, common
 
 logScope:
   topics = "task-threadpool"
@@ -19,7 +19,6 @@ type
     chanSendToPool*: AsyncChannel[ThreadSafeString]
     thread: Thread[PoolThreadArg]
     size: int
-    stickers*: StickersTasks
   PoolThreadArg* = object
     chanSendToMain*: AsyncChannel[ThreadSafeString]
     chanRecvFromMain*: AsyncChannel[ThreadSafeString]
@@ -43,7 +42,6 @@ proc newThreadPool*(size: int = MaxThreadPoolSize): ThreadPool =
   result.chanSendToPool = newAsyncChannel[ThreadSafeString](-1)
   result.thread = Thread[PoolThreadArg]()
   result.size = size
-  result.stickers = newStickersTasks(result.chanSendToPool)
 
 proc init*(self: ThreadPool) =
   self.chanRecvFromPool.open()
@@ -89,21 +87,13 @@ proc runner(arg: TaskThreadArg) {.async.} =
       threadid=arg.id
 
     try:
-      case messageType
-        of "StickerPackPurchaseGasEstimate:ObjectType":
-          let decoded = Json.decode(received, StickerPackPurchaseGasEstimate, allowUnknownFields = true)
-          decoded.run()
-        of "ObtainAvailableStickerPacks:ObjectType":
-          let decoded = Json.decode(received, ObtainAvailableStickerPacks, allowUnknownFields = true)
-          decoded.run()
-        else:
-          try:
-            let task = cast[Task](jsonNode{"tptr"}.getInt)
-            task(received)
-          except Exception as e:
-            error "[threadpool task thread] unknown message", message=received, error=e.msg
+      let task = cast[Task](jsonNode{"tptr"}.getInt)
+      try:
+        task(received)
+      except Exception as e:
+        error "[threadpool task thread] exception", error=e.msg
     except Exception as e:
-      error "[threadpool task thread] exception", error=e.msg
+      error "[threadpool task thread] unknown message", message=received
 
     let noticeToPool = ThreadNotification(id: arg.id, notice: "done")
     info "[threadpool task thread] sending 'done' notice to pool",
@@ -244,7 +234,6 @@ proc pool(arg: PoolThreadArg) {.async.} =
             newlength=(threadsBusy.len + 1), threadid=tpl.id
           threadsBusy.add tpl.id, (tpl.thr, tpl.chanSendToTask)
           await tpl.chanSendToTask.send(task.safe)
-
 
   var allTaskThreads: seq[Thread[TaskThreadArg]] = @[]
 
