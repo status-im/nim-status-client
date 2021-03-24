@@ -28,6 +28,13 @@ StatusIconTabButton {
         chatsModel.communities.setActiveCommunity(communityId)
     }
 
+    MouseArea {
+        enabled: true
+        anchors.fill: communityButton
+        acceptedButtons: Qt.RightButton
+        onClicked:  { console.log('right clicked!!' )}
+    }
+
     StatusToolTip {
         visible: communityButton.hovered
         text: communityButton.name
