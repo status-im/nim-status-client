@@ -18,6 +18,27 @@ proc delete*(peer: string) =
 proc requestAllHistoricMessages*(): string =
   return callPrivateRPC("requestAllHistoricMessages".prefix, %*[])
 
+proc requestStoreMessages*(topics: seq[string], symKeyID: string, peer: string, numberOfMessages: int, fromTimestamp: int64 = 0, toTimestamp: int64 = 0, force: bool = false) =
+  var toValue = times.toUnix(times.getTime())
+  var fromValue = toValue - 86400
+  if fromTimestamp != 0:
+    fromValue = fromTimestamp
+  if toTimestamp != 0:
+    toValue = toTimestamp
+
+  echo callPrivateRPC("requestMessages".prefix, %* [
+    {
+        "topics": topics,
+        "mailServerPeer": "16Uiu2HAmMGhfSTUzKbsjMWxc6T1X4wiTWSF1bEWSLjAukCm7KiHV",
+        "timeout": 30,
+        "limit": numberOfMessages,
+        "cursor": nil,
+        "from": fromValue,
+        "to": toValue,
+        "force": force
+    }
+  ])
+
 proc syncChatFromSyncedFrom*(chatId: string): string =
   return callPrivateRPC("syncChatFromSyncedFrom".prefix, %*[chatId])
 
