@@ -10,6 +10,7 @@ ModalPopup {
 
     property Popup parentPopup
     property string btnType: "warn"
+    property bool showCancelButton: false
 
 
     height: 186
@@ -19,14 +20,18 @@ ModalPopup {
 
     //% "Confirm"
     property string confirmButtonLabel: qsTrId("close-app-button")
+    //% "Cancel"
+    property string cancelButtonLabel: qsTr("Cancel")
     //% "Are you sure you want to this?"
     property string confirmationText: qsTrId("are-you-sure-you-want-to-this-")
 
     property var value
 
     signal confirmButtonClicked()
+    signal cancelButtonClicked()
 
     StyledText {
+        id: innerText
         text: confirmationDialog.confirmationText
         font.pixelSize: 15
         anchors.left: parent.left
@@ -37,15 +42,26 @@ ModalPopup {
     footer: Item {
         id: footerContainer
         width: parent.width
-        height: children[0].height
+        height: confirmButton.height
 
         StatusButton {
+            id: confirmButton
             type: confirmationDialog.btnType
-            anchors.right: parent.right
+            anchors.right: cancelButton.left
             anchors.rightMargin: Style.current.smallPadding
             text: confirmationDialog.confirmButtonLabel
             anchors.bottom: parent.bottom
             onClicked: confirmationDialog.confirmButtonClicked()
+        }
+
+        StatusButton {
+            id: cancelButton
+            anchors.right: parent.right
+            visible: showCancelButton
+            anchors.rightMargin: Style.current.smallPadding
+            text: confirmationDialog.cancelButtonLabel
+            anchors.bottom: parent.bottom
+            onClicked: confirmationDialog.cancelButtonClicked()
         }
     }
 }

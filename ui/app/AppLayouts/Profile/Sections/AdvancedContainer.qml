@@ -69,8 +69,13 @@ Item {
             text: qsTrId("wallet")
             isSwitch: true
             switchChecked: appSettings.walletEnabled
-            onClicked: function (checked) {
-                appSettings.walletEnabled = checked
+            onClicked: {
+                if (!appSettings.walletEnabled) {
+                    confirmationPopup.settingsProp = "walletEnabled"
+                    confirmationPopup.open()
+                } else {
+                    appSettings.walletEnabled = false
+                }
             }
         }
 
@@ -79,8 +84,13 @@ Item {
             text: qsTrId("dapp-browser")
             isSwitch: true
             switchChecked: appSettings.browserEnabled
-            onClicked: function (checked) {
-                appSettings.browserEnabled = checked
+            onClicked: {
+                if (!appSettings.browserEnabled) {
+                    confirmationPopup.settingsProp = "browserEnabled"
+                    confirmationPopup.open()
+                } else {
+                    appSettings.browserEnabled = false
+                }
             }
         }
 
@@ -89,8 +99,13 @@ Item {
             text: qsTrId("communities")
             isSwitch: true
             switchChecked: appSettings.communitiesEnabled
-            onClicked: function (checked) {
-                appSettings.communitiesEnabled = checked
+            onClicked: {
+                if (!appSettings.communitiesEnabled) {
+                    confirmationPopup.settingsProp = "communitiesEnabled"
+                    confirmationPopup.open()
+                } else {
+                    appSettings.communitiesEnabled = false
+                }
             }
         }
 
@@ -99,8 +114,13 @@ Item {
             text: qsTrId("node-management")
             isSwitch: true
             switchChecked: appSettings.nodeManagementEnabled
-            onClicked: function (checked) {
-                appSettings.nodeManagementEnabled = checked
+            onClicked: {
+                if (!appSettings.nodeManagementEnabled) {
+                    confirmationPopup.settingsProp = "nodeManagementEnabled"
+                    confirmationPopup.open()
+                } else {
+                    appSettings.nodeManagementEnabled = false
+                }
             }
         }
     }
@@ -113,7 +133,23 @@ Item {
         id: fleetModal
     }
 
+    ConfirmationDialog {
+        id: confirmationPopup
+        property string settingsProp: ""
+        height: 310
+        showCancelButton: true
+        confirmationText: qsTr("This feature is experimental and is meant for testing purposes by core contributors and the community. It's not meant for real use and makes no claims of security or integrity of funds or data. Use at your own risk.")
+        confirmButtonLabel: qsTr("I understand")
+        onConfirmButtonClicked: {
+            appSettings[settingsProp] = true
+            settingsProp = ""
+            close()
+        }
 
+        onCancelButtonClicked: {
+            close()
+        }
+    }
 }
 
 /*##^##
