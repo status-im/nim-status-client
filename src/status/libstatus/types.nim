@@ -187,6 +187,7 @@ type
     Fleet = "fleet"
     VisibleTokens = "wallet/visible-tokens"
     PinnedMailservers = "pinned-mailservers"
+    NotificationsEnabled = "notifications-enabled?"
 
   UpstreamConfig* = ref object
     enabled* {.serializedFieldName("Enabled").}: bool

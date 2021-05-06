@@ -4,6 +4,7 @@ import ../chat/[chat, message]
 import ../signals/messages
 import ./types
 import ./settings as status_settings
+from status_go import nil
 
 proc buildFilter*(chat: Chat):JsonNode =
   if chat.chatType == ChatType.PrivateGroupChat:
@@ -382,3 +383,7 @@ proc myPendingRequestsToJoin*(): seq[CommunityMembershipRequest] =
       communityRequests.add(jsonCommunityReqest.toCommunityMembershipRequest())
 
   return communityRequests
+
+proc startLocalNotifications*() =
+  discard status_go.startLocalNotifications()
+

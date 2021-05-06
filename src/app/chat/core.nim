@@ -4,6 +4,7 @@ import ../../status/messages as messages_model
 import ../../status/signals/types
 import ../../status/libstatus/types as status_types
 import ../../status/libstatus/settings as status_settings
+import ../../status/libstatus/chat as core_chat
 import ../../status/[chat, contacts, status, wallet, stickers]
 import view, views/channels_list, views/message_list, views/reactions, views/stickers as stickers_view
 import ../../eventemitter
@@ -35,6 +36,10 @@ proc init*(self: ChatController) =
   self.handleSignals()
 
   let pubKey = status_settings.getSetting[string](Setting.PublicKey, "0x0")
+
+  var enableNotif = status_settings.getSetting[bool](Setting.NotificationsEnabled, false, true)
+  if enableNotif:
+    core_chat.startLocalNotifications()
 
   self.view.pubKey = pubKey
   self.status.chat.init(pubKey)

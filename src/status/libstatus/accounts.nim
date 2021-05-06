@@ -172,6 +172,7 @@ proc getAccountSettings*(account: GeneratedAccount, defaultNetworks: JsonNode, i
     "currency": "usd",
     "identicon": account.identicon,
     "waku-enabled": true,
+    "notifications-enabled?": true,
     "wallet/visible-tokens": {
       "mainnet": ["SNT"]
     },

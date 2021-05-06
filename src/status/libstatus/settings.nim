@@ -51,6 +51,9 @@ proc getSettings*(useCached: bool = true, keepSensitiveData: bool = false): Json
 proc getSetting*[T](name: Setting, defaultValue: T, useCached: bool = true): T =
   let settings: JsonNode = getSettings(useCached, $name == "mnemonic")
   if not settings.contains($name) or settings{$name}.isEmpty():
+    if name == Setting.NotificationsEnabled: # By default the notifications should be enabled
+      discard saveSetting(name, newJBool(true))
+      return getSetting(name, defaultValue, true)
     return defaultValue
   result = Json.decode($settings{$name}, T)
 
