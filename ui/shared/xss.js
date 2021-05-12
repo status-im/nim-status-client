@@ -293,7 +293,7 @@ function getDefaultWhiteList() {
     s: [],
     section: [],
     small: [],
-    span: [],
+    span: ["class"],
     sub: [],
     sup: [],
     strong: [],

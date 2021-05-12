@@ -223,6 +223,7 @@ proc toCommunityMembershipRequest*(jsonCommunityMembershipRequest: JsonNode): Co
 proc toTextItem*(jsonText: JsonNode): TextItem =
   result = TextItem(
     literal: jsonText{"literal"}.getStr,
+    language: jsonText{"language"}.getStr,
     textType: jsonText{"type"}.getStr,
     destination: jsonText{"destination"}.getStr,
     children: @[]

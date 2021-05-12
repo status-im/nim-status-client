@@ -18,6 +18,7 @@ type TextItem* = object
   textType*: string
   children*: seq[TextItem]
   literal*: string
+  language*: string
   destination*: string
 
 type CommandParameters* = object

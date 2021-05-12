@@ -50,12 +50,18 @@ QtObject {
     }
 
     function getMessageWithStyle(msg, useCompactMode, isCurrentUser) {
+        let fMsg = msg.startsWith('<code>') ? `<div class='code-wrapper'>${msg}</div>` : msg
+        const codeBg = Style.current.name === 'dark' ? Style.current.darkGrey : Style.current.lightGrey
         return `<style type="text/css">` +
                     `p, img, a, del, code, blockquote { margin: 0; padding: 0; }` +
                     `code {` +
-                        `background-color: ${Style.current.codeBackground};` +
-                        `color: ${Style.current.white};` +
                         `white-space: pre;` +
+                        `background-color: ${codeBg};` +
+                    `}` +
+                    `.code-wrapper {` +
+                        `background-color: ${codeBg};` +
+                        `color: ${Style.current.textColor};` +
+                        `width: 100%;` +
                     `}` +
                     `p {` +
                         `line-height: 22px;` +
@@ -83,8 +89,26 @@ QtObject {
                     `.emoji {` +
                         `vertical-align: bottom;` +
                     `}` +
+                    `.pink {` +
+                        `color: #f494f7;` +
+                    `}` +
+                    `.purple {` +
+                        `color: #eb57d9;` +
+                    `}` +
+                    `.grey {` +
+                        `color: #757575;` +
+                    `}` +
+                    `.yellow {` +
+                        `color: #b8a200;` +
+                    `}` +
+                    `.blue {` +
+                        `color: ${Style.current.blue};` +
+                    `}` +
+                    `.red {` +
+                        `color: ${Style.current.red};` +
+                    `}` +
                 `</style>` +
-                `${msg}`
+                `${fMsg}`
     }
 
     function getAppSectionIndex(section) {
