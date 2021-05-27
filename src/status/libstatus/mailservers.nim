@@ -29,7 +29,7 @@ proc requestStoreMessages*(topics: seq[string], symKeyID: string, peer: string, 
   echo callPrivateRPC("requestMessages".prefix, %* [
     {
         "topics": topics,
-        "mailServerPeer": "16Uiu2HAmMGhfSTUzKbsjMWxc6T1X4wiTWSF1bEWSLjAukCm7KiHV",
+        "mailServerPeer": "16Uiu2HAmVVi6Q4j7MAKVibquW8aA27UNrA4Q8Wkz9EetGViu8ZF1",
         "timeout": 30,
         "limit": numberOfMessages,
         "cursor": nil,

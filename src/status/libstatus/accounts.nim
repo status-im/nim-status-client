@@ -24,9 +24,10 @@ proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, networkCon
   result["ClusterConfig"]["StaticNodes"] = %* (@[])
   result["ClusterConfig"]["RendezvousNodes"] = %* (@[])
   result["ClusterConfig"]["WakuNodes"] = %*(@[
-      "/ip4/8.210.222.231/tcp/30303/p2p/16Uiu2HAmL5okWopX7NqZWBUKVqW8iUxCEmd5GMHLVPwCgzYzQv3e",
-      "/ip4/188.166.135.145/tcp/30303/p2p/16Uiu2HAmL5okWopX7NqZWBUKVqW8iUxCEmd5GMHLVPwCgzYzQv3e",
-      "/ip4/34.121.100.108/tcp/30303/p2p/16Uiu2HAmVkKntsECaYfefR1V2yCR79CegLATuTPE6B9TxgxBiiiA"
+      "/ip4/134.209.113.86/tcp/9000/p2p/16Uiu2HAmVVi6Q4j7MAKVibquW8aA27UNrA4Q8Wkz9EetGViu8ZF1",
+  ])
+  result["ClusterConfig"]["WakuStoreNodes"] = %*(@[
+      "/ip4/134.209.113.86/tcp/9000/p2p/16Uiu2HAmVVi6Q4j7MAKVibquW8aA27UNrA4Q8Wkz9EetGViu8ZF1"
   ])
 
   result["Rendezvous"] = newJBool(false)
