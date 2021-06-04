@@ -160,11 +160,16 @@ var NODE_CONFIG* = %* {
     "Enabled": true,
     "URL": "https://mainnet.infura.io/v3/" & INFURA_TOKEN_RESOLVED
   },
-  "WakuConfig": {
+   "WakuConfig": {
     "BloomFilterMode": nil,
     "Enabled": true,
     "LightClient": true,
     "MinimumPoW": 0.001
+  },
+  "WakuV2Config": {
+    "Enabled": false,
+    "Host": "0.0.0.0",
+    "Port": 0
   },
   "WalletConfig": {
     "Enabled": true

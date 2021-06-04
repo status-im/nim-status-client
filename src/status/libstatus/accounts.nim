@@ -1,40 +1,49 @@
 import json, os, nimcrypto, uuids, json_serialization, chronicles, strutils
 
-from status_go import multiAccountGenerateAndDeriveAddresses, generateAlias, identicon, saveAccountAndLogin, login, openAccounts
+from status_go import multiAccountGenerateAndDeriveAddresses, generateAlias, identicon, saveAccountAndLogin, login, openAccounts, getNodeConfig
 import core
 import utils as utils
 import types as types
 import accounts/constants
 import ../signals/types as signal_types
 import ../wallet/account
+from settings as status_settings import nil
 
 proc getNetworkConfig(currentNetwork: string): JsonNode =
   result = constants.DEFAULT_NETWORKS.first("id", currentNetwork)
 
 
-proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, networkConfig: JsonNode, fleet: Fleet = Fleet.PROD): JsonNode =
+proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, networkConfig: JsonNode, fleet: Fleet = Fleet.PROD, useDefaultConfig: bool = false): JsonNode =
   let upstreamUrl = networkConfig["config"]["UpstreamConfig"]["URL"]
   var newDataDir = networkConfig["config"]["DataDir"].getStr
   newDataDir.removeSuffix("_rpc")
 
-  result = constants.NODE_CONFIG.copy()
+  if useDefaultConfig:
+    result = constants.NODE_CONFIG.copy()
+  else:
+    result = getNodeConfig().parseJSON()
   result["ClusterConfig"]["Fleet"] = newJString($fleet)
   result["ClusterConfig"]["BootNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Bootnodes)
   result["ClusterConfig"]["TrustedMailServers"] = %* fleetConfig.getNodes(fleet, FleetNodes.Mailservers)
   result["ClusterConfig"]["StaticNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Whisper)
   result["ClusterConfig"]["RendezvousNodes"] = %* fleetConfig.getNodes(fleet, FleetNodes.Rendezvous)
-  result["Rendezvous"] = newJBool(fleetConfig.getNodes(fleet, FleetNodes.Rendezvous).len > 0)
+  result["ClusterConfig"]["WakuNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
+  result["ClusterConfig"]["WakuStoreNodes"] =  %* fleetConfig.getNodes(fleet, FleetNodes.Waku)
+
   result["NetworkId"] = networkConfig["config"]["NetworkId"]
   result["DataDir"] = newDataDir.newJString()
   result["UpstreamConfig"]["Enabled"] = networkConfig["config"]["UpstreamConfig"]["Enabled"]
   result["UpstreamConfig"]["URL"] = upstreamUrl
   result["ShhextConfig"]["InstallationID"] = newJString(installationId)
+
+
+  echo $result
   # TODO: commented since it's not necessary (we do the connections thru C bindings). Enable it thru an option once status-nodes are able to be configured in desktop
   # result["ListenAddr"] = if existsEnv("STATUS_PORT"): newJString("0.0.0.0:" & $getEnv("STATUS_PORT")) else: newJString("0.0.0.0:30305")
 
-proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, currentNetwork: string = constants.DEFAULT_NETWORK_NAME, fleet: Fleet = Fleet.PROD): JsonNode =
+proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, currentNetwork: string = constants.DEFAULT_NETWORK_NAME, fleet: Fleet = Fleet.PROD, useDefaultConfig: bool = false): JsonNode =
   let networkConfig = getNetworkConfig(currentNetwork)
-  result = getNodeConfig(fleetConfig, installationId, networkConfig, fleet)
+  result = getNodeConfig(fleetConfig, installationId, networkConfig, fleet, useDefaultConfig)
 
 proc hashPassword*(password: string): string =
   result = "0x" & $keccak_256.digest(password)
@@ -186,7 +195,7 @@ proc setupAccount*(fleetConfig: FleetConfig, account: GeneratedAccount, password
     let accountData = getAccountData(account)
     let installationId = $genUUID()
     var settingsJSON = getAccountSettings(account, constants.DEFAULT_NETWORKS, installationId)
-    var nodeConfig = getNodeConfig(fleetConfig, installationId)
+    var nodeConfig = getNodeConfig(fleetConfig, installationId, constants.DEFAULT_NETWORK_NAME, Fleet.PROD, true)
 
     result = saveAccountAndLogin(account, $accountData, password, $nodeConfig, $settingsJSON)
 

@@ -36,5 +36,13 @@ ModalPopup {
         FleetRadioSelector {
             fleetName: Constants.eth_test
         }
+
+        FleetRadioSelector {
+            fleetName: Constants.waku_prod
+        }
+
+        FleetRadioSelector {
+            fleetName: Constants.waku_test
+        }
     }
 }

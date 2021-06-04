@@ -15,17 +15,23 @@ StatusRadioButtonRow {
         if (checked) {
             if (profileModel.fleets.fleet === fleetName) return;
             newFleet = fleetName;
-            confirmDialog.open();
+            openPopup(confirmDialogComponent)
         }
     }
-    ConfirmationDialog {
-        id: confirmDialog
-        //% "Warning!"
-        title: qsTrId("close-app-title")
-        //% "Change fleet to %1"
-        confirmationText: qsTrId("change-fleet-to--1").arg(newFleet)
-        onConfirmButtonClicked: profileModel.fleets.setFleet(newFleet)
-        onClosed: profileModel.fleets.triggerFleetChange()
+
+    Component {
+        id: confirmDialogComponent
+        ConfirmationDialog {
+            //% "Warning!"
+            title: qsTrId("close-app-title")
+            //% "Change fleet to %1"
+            confirmationText: qsTrId("change-fleet-to--1").arg(newFleet)
+            onConfirmButtonClicked: profileModel.fleets.setFleet(newFleet)
+            onClosed: {
+                profileModel.fleets.triggerFleetChange()
+                destroy();
+            }
+        }
     }
 }
 
