@@ -146,6 +146,11 @@ proc requestMessages*(self: MailserverModel) =
   debug "Requesting messages from", mailserver=self.activeMailserver
   discard status_mailservers.requestAllHistoricMessages()
 
+proc requestStoreMessages*(self: MailserverModel, topics: seq[string], fromValue: int64 = 0, toValue: int64 = 0, force: bool = false) =
+  debug "Requesting messages from", mailserver=self.activeMailserver
+  let generatedSymKey = status_chat.generateSymKeyFromPassword()
+  status_mailservers.requestStoreMessages(topics, generatedSymKey, self.activeMailserver, 1000, fromValue, toValue, force)
+
 proc requestMoreMessages*(self: MailserverModel, chatId: string) =
   debug "Requesting more messages from", mailserver=self.activeMailserver, chatId=chatId
   discard status_mailservers.syncChatFromSyncedFrom(chatId)

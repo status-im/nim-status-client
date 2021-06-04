@@ -124,13 +124,13 @@ var NODE_CONFIG* = %* {
   #"ListenAddr": ":30304",
   "LogEnabled": true,
   "LogFile": "geth.log",
-  "LogLevel": "DEBUG",
+  "LogLevel": "INFO",
   "MailserversConfig": {
     "Enabled": true
   },
   "Name": "StatusDesktop",
   "NetworkId": 1,
-  "NoDiscovery": true,
+  "NoDiscovery": false,
   "PermissionsConfig": {
     "Enabled": true
   },
@@ -160,8 +160,14 @@ var NODE_CONFIG* = %* {
     "Enabled": true,
     "URL": "https://mainnet.infura.io/v3/" & INFURA_TOKEN_RESOLVED
   },
-  "WakuV2Config": {
+   "WakuConfig": {
+    "BloomFilterMode": nil,
     "Enabled": true,
+    "LightClient": true,
+    "MinimumPoW": 0.001
+  },
+  "WakuV2Config": {
+    "Enabled": false,
     "Host": "0.0.0.0",
     "Port": 0
   },

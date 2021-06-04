@@ -8,6 +8,8 @@ import
   ./core, ./types, ../signals/types as statusgo_types, ./accounts/constants,
   ./utils
 
+from status_go import getNodeConfig
+
 var
   settings {.threadvar.}: JsonNode
   settingsInited {.threadvar.}: bool
@@ -113,3 +115,24 @@ proc getMailservers*():JsonNode =
   let fleet = getSetting[string](Setting.Fleet, $Fleet.PROD)
   result = callPrivateRPC("mailservers_getMailservers").parseJSON()["result"]
 
+proc getWakuVersion*():int =
+  let nodeConfig = getNodeConfig().parseJSON()
+  if nodeConfig["WakuConfig"]["Enabled"].getBool():
+    return 1
+  if nodeConfig["WakuV2Config"]["Enabled"].getBool():
+    return 2
+  return 0
+
+proc setWakuVersion*(newVersion: int) =
+  let nodeConfig = getNodeConfig().parseJSON()
+  if newVersion == 1:
+    nodeConfig["WakuConfig"]["Enabled"] = newJBool(true)
+    nodeConfig["WakuV2Config"]["Enabled"] = newJBool(false)
+    nodeConfig["NoDiscovery"] = newJBool(false)
+    nodeConfig["Rendezvous"] = newJBool(true)
+  else:
+    nodeConfig["WakuConfig"]["Enabled"] = newJBool(false)
+    nodeConfig["WakuV2Config"]["Enabled"] = newJBool(true)
+    nodeConfig["NoDiscovery"] = newJBool(true)
+    nodeConfig["Rendezvous"] = newJBool(false)
+  discard saveSetting(Setting.NodeConfig, nodeConfig)
