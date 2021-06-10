@@ -12,6 +12,9 @@ proc ping*(mailservers: seq[string], timeoutMs: int): string =
 proc update*(peer: string) =
   discard callPrivateRPC("updateMailservers".prefix, %* [[peer]])
 
+proc setMailserver*(peer: string): string =
+  return callPrivateRPC("setMailserver".prefix, %* [peer])
+
 proc delete*(peer: string) =
   discard callPrivateRPC("mailservers_deleteMailserver", %* [peer])
 

@@ -972,3 +972,10 @@ QtObject:
   proc formatInputCode(self: ChatsView, inputText: string): string {.slot.} =
     let strikeThroughRegex = re"""(?<!\>)`(?!<span style=" font-family:'monospace';">)([^*]+)(?!<\/span>)`"""
     self.formatInputStuff(strikeThroughRegex, inputText)
+
+  proc requestAllHistoricMessages(self: ChatsView) {.slot.} =
+    debug "Requesting messages"
+    # TODO: the mailservers must change depending on whether we are using wakuV1 or wakuV2 
+    # in the meantime I'm hardcoding a specific mailserver
+    echo status_mailservers.setMailserver("16Uiu2HAmVVi6Q4j7MAKVibquW8aA27UNrA4Q8Wkz9EetGViu8ZF1")
+    echo status_mailservers.requestAllHistoricMessages()

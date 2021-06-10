@@ -97,6 +97,14 @@ PopupMenu {
             chatsModel.markAllChannelMessagesReadByIndex(channelContextMenu.channelIndex)
         }
     }
+
+    Action {
+        enabled: profileModel.fleets.fleet == Constants.waku_prod || profileModel.fleets.fleet == Constants.waku_test
+        text: qsTr("WakuV2 - requestAllHistoricMessages")
+        onTriggered: chatsModel.requestAllHistoricMessages()
+    }
+
+
     // FetchMoreMessages {}  // TODO: disabling it temporarily because wakuext_syncChatFromSyncedFrom does not support specifying a date range
     Action {
         //% "Clear History"
@@ -110,7 +118,6 @@ PopupMenu {
     Separator {
         visible: deleteAction.enabled
     }
-
     Action {
         id: deleteAction
         text: {
