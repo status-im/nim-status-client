@@ -9,7 +9,7 @@ import ../../status/ens as status_ens
 import ../../status/chat/[chat, message]
 import ../../status/profile/profile
 import web3/[conversions, ethtypes]
-import views/[channels_list, message_list, chat_item, suggestions_list, reactions, stickers, groups, transactions, communities, community_list, community_item]
+import views/[channels_list, message_list, chat_item, suggestions_list, reactions, stickers, groups, transactions, communities, community_list, community_item, format_input]
 import ../utils/image_utils
 import ../../status/tasks/[qt, task_runner_impl]
 import ../../status/tasks/marathon/mailserver/worker
@@ -102,6 +102,7 @@ QtObject:
   type
     ChatsView* = ref object of QAbstractListModel
       status: Status
+      formatInputView: FormatInputView
       chats*: ChannelsList
       currentSuggestions*: SuggestionsList
       callResult: string
@@ -127,6 +128,7 @@ QtObject:
 
   proc delete(self: ChatsView) = 
     self.chats.delete
+    self.formatInputView.delete
     self.activeChannel.delete
     self.contextChannel.delete
     self.currentSuggestions.delete
@@ -147,6 +149,8 @@ QtObject:
   proc newChatsView*(status: Status): ChatsView =
     new(result, delete)
     result.status = status
+    result.formatInputView = newFormatInputView()
+
     result.connected = false
     result.chats = newChannelsList(status)
     result.activeChannel = newChatItemView(status)
@@ -165,6 +169,10 @@ QtObject:
     result.messageList[status_utils.getTimelineChatId()] = newChatMessageList(status_utils.getTimelineChatId(), result.status, false)
 
     result.setup()
+
+  proc getFormatInput(self: ChatsView): QVariant {.slot.} = newQVariant(self.formatInputView)
+  QtProperty[QVariant] formatInputView:
+    read = getFormatInput
 
   proc getMessageListIndexById(self: ChatsView, id: string): int
 
@@ -920,50 +928,3 @@ QtObject:
 
   proc requestAllHistoricMessagesResult(self: ChatsView, resultEncoded: string) {.slot.} =
     self.setLoadingMessages(true)
-
-  proc formatInputStuff(self: ChatsView, regex: Regex, inputText: string): string =
-    var matches: seq[tuple[first, last: int]] = @[(-1, 0)]
-
-    var resultTuple: tuple[first, last: int]
-    var start = 0
-    var results: seq[tuple[first, last: int]] = @[]
-
-    while true:
-      resultTuple = inputText.findBounds(regex, matches, start)
-      if (resultTuple[0] == -1):
-        break
-      start = resultTuple[1] + 1
-      results.add(matches[0])
-
-    if (results.len == 0):
-      return ""
-    
-    var jsonString = "["
-    var first = true
-    
-    for result in results:
-      if (not first):
-        jsonString = jsonString & ","
-      first = false
-      jsonString = jsonString & "[" & $result[0] & "," & $result[1] & "]"
-
-    jsonString = jsonString & "]"
-
-    return jsonString
-
-
-  proc formatInputItalic(self: ChatsView, inputText: string): string {.slot.} =
-    let italicRegex = re"""(?<!\>)(?<!\*)\*(?!<span style=" font-style:italic;">)([^*]+)(?!<\/span>)\*"""
-    self.formatInputStuff(italicRegex, inputText)
-
-  proc formatInputBold(self: ChatsView, inputText: string): string {.slot.} =
-    let boldRegex = re"""(?<!\>)\*\*(?!<span style=" font-weight:600;">)([^*]+)(?!<\/span>)\*\*"""
-    self.formatInputStuff(boldRegex, inputText)
-
-  proc formatInputStrikeThrough(self: ChatsView, inputText: string): string {.slot.} =
-    let strikeThroughRegex = re"""(?<!\>)~~(?!<span style=" text-decoration: line-through;">)([^*]+)(?!<\/span>)~~"""
-    self.formatInputStuff(strikeThroughRegex, inputText)
-
-  proc formatInputCode(self: ChatsView, inputText: string): string {.slot.} =
-    let strikeThroughRegex = re"""(?<!\>)`(?!<span style=" font-family:'monospace';">)([^*]+)(?!<\/span>)`"""
-    self.formatInputStuff(strikeThroughRegex, inputText)

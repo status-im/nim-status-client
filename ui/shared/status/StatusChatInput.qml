@@ -297,13 +297,13 @@ Rectangle {
         // TODO fix Those spans are added automatically by QT when you press space after an emoji. They break the code formation process
 
         // strikethrough
-        setFormatInInput(chatsModel.formatInputStrikeThrough, '<span style=" text-decoration: line-through;">', '</span>', '~', 2)
+        setFormatInInput(chatsModel.formatInputView.formatInputStrikeThrough, '<span style=" text-decoration: line-through;">', '</span>', '~', 2)
         // bold
-        setFormatInInput(chatsModel.formatInputBold, '<b>', '</b>', '*', 2)
+        setFormatInInput(chatsModel.formatInputView.formatInputBold, '<b>', '</b>', '*', 2)
         // code
-        setFormatInInput(chatsModel.formatInputCode, '<code>', '</code>', '`', 1)
+        setFormatInInput(chatsModel.formatInputView.formatInputCode, '<code>', '</code>', '`', 1)
         // italic
-        setFormatInInput(chatsModel.formatInputItalic, '<i>', '</i>', '*', 1)
+        setFormatInInput(chatsModel.formatInputView.formatInputItalic, '<i>', '</i>', '*', 1)
     }
 
     function onRelease(event) {
