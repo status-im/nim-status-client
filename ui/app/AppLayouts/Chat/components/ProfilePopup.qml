@@ -43,7 +43,7 @@ ModalPopup {
         fromAuthor = fromAuthorParam || ""
         identicon = identiconParam || ""
         text = textParam || ""
-        isEnsVerified = chatsModel.isEnsVerified(this.fromAuthor)
+        isEnsVerified = chatsModel.ensView.isEnsVerified(this.fromAuthor)
         isBlocked = profileModel.contacts.isContactBlocked(this.fromAuthor);
         alias = chatsModel.alias(this.fromAuthor) || ""
         

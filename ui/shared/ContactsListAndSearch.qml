@@ -27,7 +27,7 @@ Item {
         noContactsRect.visible = false
         searchResults.loading = true
         searchResults.showProfileNotFoundMessage = false
-        chatsModel.resolveENS(ensName)
+        chatsModel.ensView.resolveENS(ensName)
     });
 
     function validate() {
@@ -75,7 +75,7 @@ Item {
         textField.anchors.rightMargin: clearBtn.width + Style.current.padding + 2
 
         Connections {
-            target: chatsModel
+            target: chatsModel.ensView
             onEnsWasResolved: {
                 if(chatKey.text == ""){
                     ensUsername.text = "";
@@ -90,7 +90,7 @@ Item {
                         //% "Can't chat with yourself"
                         validationError = qsTrId("can-t-chat-with-yourself");
                     } else {
-                        searchResults.username = chatsModel.formatENSUsername(chatKey.text)
+                        searchResults.username = chatsModel.ensView.formatENSUsername(chatKey.text)
                         let userAlias = utilsModel.generateAlias(resolvedPubKey)
                         userAlias = userAlias.length > 20 ? userAlias.substring(0, 19) + "..." : userAlias
                         searchResults.userAlias =  userAlias + " • " + Utils.compactAddress(resolvedPubKey, 4)
