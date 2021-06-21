@@ -126,6 +126,9 @@ QtObject:
   proc setActiveChannelByIndex*(self: ChannelView, index: int) {.slot.} =
     self.setActiveChannelByIndexWithForce(index, false)
 
+  proc emitActiveChannelChangeEvent*(self: ChannelView, chatId: string) =
+    self.status.chat.setActiveChannel(chatId)
+
   proc getActiveChannelIdx(self: ChannelView): int {.slot.} =
     if (self.communities.activeCommunity.active):
       return self.communities.activeCommunity.chats.chats.findIndexById(self.activeChannel.id)

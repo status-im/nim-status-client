@@ -254,31 +254,12 @@ StackLayout {
             Layout.fillWidth: true
         }
 
-        StackLayout {
-            id: stackLayoutChatMessages
+        ChatMessages {
+            id: chatMessages
+            messageList: chatsModel.messageList
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            Repeater {
-                model: chatsModel
-                Loader {
-                    active: false
-                    sourceComponent: ChatMessages {
-                        id: chatMessages
-                        messageList: model.messages
-                    }
-                }
-            }
-
-            Connections {
-                target: chatsModel.channelView
-                onActiveChannelChanged: {
-                    stackLayoutChatMessages.currentIndex = chatsModel.getMessageListIndex(chatsModel.channelView.activeChannelIndex)
-                    if(stackLayoutChatMessages.currentIndex > -1 && !stackLayoutChatMessages.children[stackLayoutChatMessages.currentIndex].active){
-                        stackLayoutChatMessages.children[stackLayoutChatMessages.currentIndex].active = true;
-                    }
-                }
-            }
         }
 
         EmojiReactions {

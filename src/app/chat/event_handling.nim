@@ -69,8 +69,7 @@ proc handleChatEvents(self: ChatController) =
     self.view.deleteMessage(evArgs.channel, evArgs.id)
 
   self.status.events.on("chatHistoryCleared") do(e: Args):
-    var args = ChannelArgs(e)
-    self.view.clearMessages(args.chat.id)
+    self.view.clearMessages()
 
   self.status.events.on("channelLoaded") do(e: Args):
     var channel = ChannelArgs(e)
@@ -79,7 +78,6 @@ proc handleChatEvents(self: ChatController) =
     # Do not add community chats to the normal chat list
     elif channel.chat.chatType != ChatType.Profile and channel.chat.chatType != status_chat.ChatType.CommunityChat:
       discard self.view.channelView.chats.addChatItemToList(channel.chat)
-    self.view.asyncMessageLoad(channel.chat.id)
 
   self.status.events.on("chatsLoaded") do(e:Args):
     self.view.calculateUnreadMessages()
@@ -113,7 +111,9 @@ proc handleChatEvents(self: ChatController) =
     self.view.removeMessagesFromTimeline(chatId)
 
   self.status.events.on("activeChannelChanged") do(e: Args):
+    self.view.clearMessages()
     self.view.setActiveChannel(ChatIdArg(e).chatId)
+    self.view.asyncMessageLoad(ChatIdArg(e).chatId)
 
   self.status.events.on("sendingMessage") do(e:Args):
     var msg = MessageArgs(e)

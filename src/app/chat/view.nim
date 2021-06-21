@@ -118,8 +118,9 @@ QtObject:
       currentSuggestions*: SuggestionsList
       activityNotificationList*: ActivityNotificationList
       callResult: string
-      messageList*: OrderedTable[string, ChatMessageList]
-      pinnedMessagesList*: OrderedTable[string, ChatMessageList]
+      messageList*: ChatMessageList
+      pinnedMessagesList*: ChatMessageList
+      timelineMessageList*: ChatMessageList
       reactions*: ReactionView
       stickers*: StickersView
       groups*: GroupsView
@@ -140,16 +141,13 @@ QtObject:
     self.ensView.delete
     self.currentSuggestions.delete
     self.activityNotificationList.delete
-    for msg in self.messageList.values:
-      msg.delete
-    for msg in self.pinnedMessagesList.values:
-      msg.delete
+    self.messageList.delete
+    self.pinnedMessagesList.delete
+    self.timelineMessageList.delete
     self.reactions.delete
     self.stickers.delete
     self.groups.delete
     self.transactions.delete
-    self.messageList = initOrderedTable[string, ChatMessageList]()
-    self.pinnedMessagesList = initOrderedTable[string, ChatMessageList]()
     self.communities.delete
     self.channelOpenTime = initTable[string, int64]()
     self.QAbstractListModel.delete
@@ -164,15 +162,15 @@ QtObject:
     result.connected = false
     result.currentSuggestions = newSuggestionsList()
     result.activityNotificationList = newActivityNotificationList(status)
-    result.messageList = initOrderedTable[string, ChatMessageList]()
-    result.pinnedMessagesList = initOrderedTable[string, ChatMessageList]()
-    result.reactions = newReactionView(status, result.messageList.addr, result.channelView.activeChannel)
+    result.messageList = newChatMessageList("", status, true)
+    result.pinnedMessagesList = newChatMessageList("", status, false)
+    result.timelineMessageList = newChatMessageList(status_utils.getTimelineChatId(), result.status, false)
+    result.reactions = newReactionView(status, result.messageList.addr, result.timelineMessageList.addr, result.channelView.activeChannel)
     result.stickers = newStickersView(status, result.channelView.activeChannel)
     result.groups = newGroupsView(status,result.channelView.activeChannel)
     result.transactions = newTransactionsView(status)
     result.unreadMessageCnt = 0
     result.loadingMessages = false
-    result.messageList[status_utils.getTimelineChatId()] = newChatMessageList(status_utils.getTimelineChatId(), result.status, false)
 
     result.setup()
 
@@ -197,8 +195,6 @@ QtObject:
   proc activeChannelChanged*(self: ChatsView) {.slot.} =
     self.channelView.activeChannelChanged()
     self.triggerActiveChannelChange()
-
-  proc getMessageListIndexById(self: ChatsView, id: string): int
 
   proc replaceMentionsWithPubKeys(self: ChatsView, mentions: seq[string], contacts: seq[Profile], message: string, predicate: proc (contact: Profile): string): string =
     var updatedMessage = message
@@ -255,12 +251,14 @@ QtObject:
  
   proc verifyMessageSent*(self: ChatsView, data: string) {.slot.} =
     let messageData = data.parseJson
-    self.messageList[messageData["chatId"].getStr].checkTimeout(messageData["id"].getStr)
+    if messageData["chatId"].getStr != self.channelView.activeChannel.id: return
+    self.messageList.checkTimeout(messageData["id"].getStr)                          # TODO: extract timeout check to chat/view
 
   proc resendMessage*(self: ChatsView, chatId: string, messageId: string) {.slot.} =
     self.status.messages.trackMessage(messageId, chatId)
     self.status.chat.resendMessage(messageId)
-    self.messageList[chatId].resetTimeOut(messageId)
+    if chatId != self.channelView.activeChannel.id: return
+    self.messageList.resetTimeOut(messageId)   # TODO: extract timeout check to chat/view
 
   proc sendImage*(self: ChatsView, imagePath: string, isStatusUpdate: bool = false): string {.slot.} =
     result = ""
@@ -334,13 +332,7 @@ QtObject:
       chat = self.status.chat.channels[channel]
     else:
       chat = self.communities.getChannel(channel)
-    if not self.messageList.hasKey(channel):
-      self.beginInsertRows(newQModelIndex(), self.messageList.len, self.messageList.len)
-      self.messageList[channel] = newChatMessageList(channel, self.status, not chat.isNil and chat.chatType != ChatType.Profile)
       self.channelOpenTime[channel] = now().toTime.toUnix * 1000
-      self.endInsertRows();
-    if not self.pinnedMessagesList.hasKey(channel):
-      self.pinnedMessagesList[channel] = newChatMessageList(channel, self.status, false)
 
   proc messagePushed*(self: ChatsView, messageIndex: int) {.signal.}
   proc newMessagePushed*(self: ChatsView) {.signal.}
@@ -349,11 +341,9 @@ QtObject:
 
   proc messagesCleared*(self: ChatsView) {.signal.}
 
-  proc clearMessages*(self: ChatsView, id: string) =
-    let channel = self.channelView.getChannelById(id)
-    if (channel == nil):
-      return
-    self.messageList[id].clear(not channel.isNil and channel.chatType != ChatType.Profile)
+  proc clearMessages*(self: ChatsView) =
+    self.messageList.clear(true)
+    self.pinnedMessagesList.clear(false)
     self.messagesCleared()
 
   proc isAddedContact*(self: ChatsView, id: string): bool {.slot.} =
@@ -363,13 +353,15 @@ QtObject:
     for msg in pinnedMessages.mitems:
       self.upsertChannel(msg.chatId)
 
-      var message = self.messageList[msg.chatId].getMessageById(msg.id)
+      if msg.chatId != self.channelView.activeChannel.id: continue
+
+      var message = self.messageList.getMessageById(msg.id)
       message.pinnedBy = msg.pinnedBy
       message.isPinned = true
 
-      self.pinnedMessagesList[msg.chatId].add(message)
+      self.pinnedMessagesList.add(message)
       # put the message as pinned in the message list
-      self.messageList[msg.chatId].changeMessagePinned(msg.id, true, msg.pinnedBy)
+      self.messageList.changeMessagePinned(msg.id, true, msg.pinnedBy)
 
   proc pushActivityCenterNotifications*(self:ChatsView, activityCenterNotifications: seq[ActivityCenterNotification]) =
     self.activityNotificationList.addActivityNotificationItemsToList(activityCenterNotifications)
@@ -395,12 +387,14 @@ QtObject:
         let chat = self.status.chat.channels[msg.chatId]
         if (chat.chatType == ChatType.Profile):
           let timelineChatId = status_utils.getTimelineChatId()
-          self.messageList[timelineChatId].add(msg)
-          if self.channelView.activeChannel.id == timelineChatId: self.activeChannelChanged()
-          msgIndex = self.messageList[timelineChatId].messages.len - 1
+          self.timelineMessageList.add(msg)
+          if self.channelView.activeChannel.id == timelineChatId: 
+            self.activeChannelChanged()
+          msgIndex = self.timelineMessageList.messages.len - 1
         else:
-          self.messageList[msg.chatId].add(msg)
-          msgIndex = self.messageList[msg.chatId].messages.len - 1
+          if msg.chatId != self.channelView.activeChannel.id: continue
+          self.messageList.add(msg)
+          msgIndex = self.messageList.messages.len - 1
       self.messagePushed(msgIndex)
       if self.channelOpenTime.getOrDefault(msg.chatId, high(int64)) < msg.timestamp.parseFloat.fromUnixFloat.toUnix:
         var channel = self.channelView.chats.getChannelById(msg.chatId)
@@ -419,9 +413,7 @@ QtObject:
 
   proc updateUsernames*(self:ChatsView, contacts: seq[Profile]) =
     if contacts.len > 0:
-      # Updating usernames for all the messages list
-      for k in self.messageList.keys:
-        self.messageList[k].updateUsernames(contacts)
+      self.messageList.updateUsernames(contacts)
       self.channelView.activeChannel.contactsUpdated()
 
   proc updateChannelForContacts*(self: ChatsView, contacts: seq[Profile]) =
@@ -443,42 +435,39 @@ QtObject:
 
 
   proc markMessageAsSent*(self:ChatsView, chat: string, messageId: string) =
-    if self.messageList.contains(chat):
-      self.messageList[chat].markMessageAsSent(messageId)
-    else:
-      error "Message could not be marked as sent", chat, messageId
+    if chat != self.channelView.activeChannel.id: return
+    self.messageList.markMessageAsSent(messageId)      
   
   proc getMessageIndex(self: ChatsView, chatId: string, messageId: string): int {.slot.} =
-    if (not self.messageList.hasKey(chatId)):
-      return -1
-    result = self.messageList[chatId].getMessageIndex(messageId)
+    if chatId != self.channelView.activeChannel.id: return -1
+    result = self.messageList.getMessageIndex(messageId)
 
   proc getMessageData(self: ChatsView, chatId: string,  index: int, data: string): string {.slot.} =
-    if (not self.messageList.hasKey(chatId)):
-      return
-
-    return self.messageList[chatId].getMessageData(index, data)
+    if chatId != self.channelView.activeChannel.id: return
+    return self.messageList.getMessageData(index, data)
 
   proc getMessageList(self: ChatsView): QVariant {.slot.} =
     self.upsertChannel(self.channelView.activeChannel.id)
-    return newQVariant(self.messageList[self.channelView.activeChannel.id])
+    return newQVariant(self.messageList)
 
   QtProperty[QVariant] messageList:
     read = getMessageList
     notify = triggerActiveChannelChange
 
+  proc getTimelineMessageList(self: ChatsView): QVariant {.slot.} =
+    return newQVariant(self.timelineMessageList)
+
+  QtProperty[QVariant] timelineMessageList:
+    read = getTimelineMessageList
+
   proc getPinnedMessagesList(self: ChatsView): QVariant {.slot.} =
     self.upsertChannel(self.channelView.activeChannel.id)
-    return newQVariant(self.pinnedMessagesList[self.channelView.activeChannel.id])
+    return newQVariant(self.pinnedMessagesList)
 
   QtProperty[QVariant] pinnedMessagesList:
     read = getPinnedMessagesList
     notify = triggerActiveChannelChange
 
-  proc pushChatItem*(self: ChatsView, chatItem: Chat) =
-    discard self.channelView.chats.addChatItemToList(chatItem)
-    self.messagePushed(self.messageList[chatItem.id].messages.len - 1)
-  
   proc setTimelineChat*(self: ChatsView, chatItem: Chat) =
     self.timelineChat = chatItem
 
@@ -502,7 +491,7 @@ QtObject:
   proc messagesLoaded*(self: ChatsView) {.signal.}
 
   proc loadMoreMessages*(self: ChatsView) {.slot.} =
-    trace "Loading more messages", chaId = self.channelView.activeChannel.id
+    debug "Loading more messages", chaId = self.channelView.activeChannel.id
     self.status.chat.chatMessages(self.channelView.activeChannel.id, false)
     self.status.chat.chatReactions(self.channelView.activeChannel.id, false)
     self.messagesLoaded();
@@ -511,7 +500,7 @@ QtObject:
     if (self.channelView.chats.chats.len == 0): return
     let selectedChannel = self.channelView.getChannel(channelIndex)
     if (selectedChannel == nil): return
-    trace "Loading more messages", chaId = selectedChannel.id
+    debug "Loading more messages with idx", chaId = selectedChannel.id
     self.status.chat.chatMessages(selectedChannel.id, false)
     self.status.chat.chatReactions(selectedChannel.id, false)
     self.messagesLoaded();
@@ -584,22 +573,16 @@ QtObject:
 
   proc removeChat*(self: ChatsView, chatId: string) =
     discard self.channelView.chats.removeChatItemFromList(chatId)
-    if (self.messageList.hasKey(chatId)):
-      let index = self.getMessageListIndexById(chatId)
-      self.beginRemoveRows(newQModelIndex(), index, index)
-      self.messageList[chatId].delete
-      self.messageList.del(chatId)
-      self.endRemoveRows()
 
   proc toggleReaction*(self: ChatsView, messageId: string, emojiId: int) {.slot.} =
     if self.channelView.activeChannel.id == status_utils.getTimelineChatId():
-      let message = self.messageList[status_utils.getTimelineChatId()].getMessageById(messageId)
+      let message = self.timelineMessageList.getMessageById(messageId)
       self.reactions.toggle(messageId, message.chatId, emojiId)
     else:
       self.reactions.toggle(messageId, self.channelView.activeChannel.id, emojiId)
 
   proc removeMessagesFromTimeline*(self: ChatsView, chatId: string) =
-    self.messageList[status_utils.getTimelineChatId()].deleteMessagesByChatId(chatId)
+    self.timelineMessageList.deleteMessagesByChatId(chatId)
     self.activeChannelChanged()
 
   proc unreadMessages*(self: ChatsView): int {.slot.} =
@@ -636,7 +619,8 @@ QtObject:
     self.calculateUnreadMessages()
 
   proc deleteMessage*(self: ChatsView, channelId: string, messageId: string) =
-    self.messageList[channelId].deleteMessage(messageId)
+    if channelId != self.channelView.activeChannel.id: return
+    self.messageList.deleteMessage(messageId)
 
   proc isConnected*(self: ChatsView): bool {.slot.} =
     result = self.status.network.isConnected
@@ -675,51 +659,23 @@ QtObject:
   QtProperty[QVariant] transactions:
     read = getTransactions
 
-  method rowCount*(self: ChatsView, index: QModelIndex = nil): int = 
-    result = self.messageList.len
-
-  method data(self: ChatsView, index: QModelIndex, role: int): QVariant =
-    if not index.isValid:
-      return
-    if index.row < 0 or index.row >= self.messageList.len:
-      return
-    return newQVariant(toSeq(self.messageList.values)[index.row])
-
-  method roleNames(self: ChatsView): Table[int, string] =
-    {
-      ChatViewRoles.MessageList.int:"messages"
-    }.toTable
-
   proc removeMessagesByUserId(self: ChatsView, publicKey: string) {.slot.} =
-    for k in self.messageList.keys:
-      self.messageList[k].removeMessagesByUserId(publicKey)
-
-  proc getMessageListIndex(self: ChatsView): int {.slot.} =
-    var idx = -1
-    for msg in toSeq(self.messageList.values):
-      idx = idx + 1
-      if(self.channelView.activeChannel.id == msg.id): return idx
-    return idx
-
-  proc getMessageListIndexById(self: ChatsView, id: string): int {.slot.} =
-    var idx = -1
-    for msg in toSeq(self.messageList.values):
-      idx = idx + 1
-      if(id == msg.id): return idx
-    return idx
+    self.messageList.removeMessagesByUserId(publicKey)
 
   proc addPinMessage*(self: ChatsView, messageId: string, chatId: string, pinnedBy: string) =
     self.upsertChannel(chatId)
-    self.messageList[chatId].changeMessagePinned(messageId, true, pinnedBy)
-    var message = self.messageList[chatId].getMessageById(messageId)
+    if chatId != self.channelView.activeChannel.id: return
+    self.messageList.changeMessagePinned(messageId, true, pinnedBy)
+    var message = self.messageList.getMessageById(messageId)
     message.pinnedBy = pinnedBy
-    self.pinnedMessagesList[chatId].add(message)
+    self.pinnedMessagesList.add(message)
 
   proc removePinMessage*(self: ChatsView, messageId: string, chatId: string) =
     self.upsertChannel(chatId)
-    self.messageList[chatId].changeMessagePinned(messageId, false, "")
+    if chatId != self.channelView.activeChannel.id: return
+    self.messageList.changeMessagePinned(messageId, false, "")
     try:
-      self.pinnedMessagesList[chatId].remove(messageId)
+      self.pinnedMessagesList.remove(messageId)
     except Exception as e:
       error "Error removing ", msg = e.msg
 
@@ -787,5 +743,7 @@ QtObject:
     self.channelView.restorePreviousActiveChannel()
 
   proc setActiveChannel*(self: ChatsView, channel: string) {.slot.} =
-    self.channelView.setActiveChannel(channel)
+    let timelineChatId = status_utils.getTimelineChatId()
+    if channel != timelineChatId:
+      self.channelView.setActiveChannel(channel)
 

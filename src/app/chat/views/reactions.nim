@@ -9,7 +9,8 @@ logScope:
 
 QtObject:
   type ReactionView* = ref object of QObject
-    messageList: ptr OrderedTable[string, ChatMessageList]
+    messageList: ptr ChatMessageList
+    timelineMessageList: ptr ChatMessageList
     activeChannel: ChatItemView
     status: Status
     pubKey*: string
@@ -20,10 +21,11 @@ QtObject:
   proc delete*(self: ReactionView) =
     self.QObject.delete
 
-  proc newReactionView*(status: Status, messageList: ptr OrderedTable[string, ChatMessageList], activeChannel: ChatItemView): ReactionView =
+  proc newReactionView*(status: Status, messageList: ptr ChatMessageList, timelineMessageList: ptr ChatMessageList, activeChannel: ChatItemView): ReactionView =
     new(result, delete)
     result = ReactionView()
     result.messageList = messageList
+    result.timelineMessageList = timelineMessageList
     result.status = status
     result.activeChannel = activeChannel
     result.setup
@@ -33,14 +35,15 @@ QtObject:
 
   proc messageEmojiReactionId(self: ReactionView, chatId: string, messageId: string, emojiId: int): string =
     let chat = self.status.chat.channels[chatId]
-    var chatId = chatId
-    if chat.chatType == ChatType.Profile:
-      chatId = status_utils.getTimelineChatId()
 
-    if (self.messageList[][chatId].getReactions(messageId) == "") :
+    var messageList = self.messageList[]
+    if chat.chatType == ChatType.Profile:
+      messageList = self.timelineMessageList[]
+
+    if (messageList.getReactions(messageId) == "") :
       return ""
 
-    let oldReactions = parseJson(self.messageList[][chatId].getReactions(messageId))
+    let oldReactions = parseJson(messageList.getReactions(messageId))
 
     for pair in oldReactions.pairs:
       if (pair[1]["emojiId"].getInt == emojiId and pair[1]["from"].getStr == self.pubKey):
@@ -65,10 +68,11 @@ QtObject:
         chatId = reaction.chatId
 
       let chat = self.status.chat.channels[chatId]
-      var messageList = self.messageList[][chatId]
+      var messageList = self.messageList[]
 
       if chat.chatType == ChatType.Profile:
-        messageList = self.messageList[][status_utils.getTimelineChatId()]
+        messageList = self.timelineMessageList[]
+
 
       var emojiReactions = messageList.getReactions(reaction.messageId)
       var oldReactions: JsonNode

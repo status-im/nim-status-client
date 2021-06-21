@@ -283,6 +283,9 @@ QtObject:
   proc clear*(self: ChatMessageList, addFakeMessages: bool = true) =
     self.beginResetModel()
     self.messages = @[]
+    self.messageIndex.clear()
+    self.messageReactions.clear()
+   
     if (addFakeMessages):
       self.addFakeMessages()
     self.endResetModel()

@@ -25,8 +25,7 @@ proc handleSignals(self: ChatController) =
     var data = EnvelopeExpiredSignal(e)
     for messageId in data.messageIds:
       if self.status.messages.messages.hasKey(messageId):
-        let chatId = self.status.messages.messages[messageId].chatId
-        self.view.messageList[chatId].checkTimeout(messageId)
+        self.view.messageList.checkTimeout(messageId)
 
   self.status.events.on(SignalType.CommunityFound.event) do(e: Args):
     var data = CommunitySignal(e)

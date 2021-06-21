@@ -101,7 +101,7 @@ proc rpcChatMessages*(chatId: string, cursorVal: JsonNode, limit: int, success: 
 
 proc chatMessages*(chatId: string, cursor: string = ""): (string, seq[Message]) =
   var cursorVal: JsonNode
-  
+
   if cursor == "":
     cursorVal = newJNull()
   else:
