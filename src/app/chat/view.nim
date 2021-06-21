@@ -9,7 +9,7 @@ import ../../status/ens as status_ens
 import ../../status/chat/[chat, message]
 import ../../status/profile/profile
 import web3/[conversions, ethtypes]
-import views/[channels_list, message_list, chat_item, suggestions_list, reactions, stickers, groups, transactions, communities, community_list, community_item, format_input, ens, activity_notification_list, channel]
+import views/[channels_list, message_list, chat_item, suggestions_list, reactions, stickers, groups, transactions, communities, community_list, community_item, format_input, ens, activity_notification_list, channel, messages]
 import ../utils/image_utils
 import ../../status/tasks/[qt, task_runner_impl]
 import ../../status/tasks/marathon/mailserver/worker
@@ -23,14 +23,10 @@ logScope:
   topics = "chats-view"
 
 type
-  ChatViewRoles {.pure.} = enum
-    MessageList = UserRole + 1
   GetLinkPreviewDataTaskArg = ref object of QObjectTaskArg
     link: string
     uuid: string
   AsyncActivityNotificationLoadTaskArg = ref object of QObjectTaskArg
-  AsyncMessageLoadTaskArg = ref object of QObjectTaskArg
-    chatId: string
 
 const getLinkPreviewDataTask: Task = proc(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[GetLinkPreviewDataTaskArg](argEncoded)
@@ -50,34 +46,6 @@ proc getLinkPreviewData[T](self: T, slot: string, link: string, uuid: string) =
   )
   self.status.tasks.threadpool.start(arg)
 
-const asyncMessageLoadTask: Task = proc(argEncoded: string) {.gcsafe, nimcall.} =
-  let arg = decode[AsyncMessageLoadTaskArg](argEncoded)
-  var messages: JsonNode
-  var msgCallSuccess: bool
-  let msgCallResult = status_chat.rpcChatMessages(arg.chatId, newJString(""), 20, msgCallSuccess)
-  if(msgCallSuccess):
-    messages = msgCallResult.parseJson()["result"]
-
-  var reactions: JsonNode
-  var reactionsCallSuccess: bool
-  let reactionsCallResult = status_chat.rpcReactions(arg.chatId, newJString(""), 20, reactionsCallSuccess)
-  if(reactionsCallSuccess):
-    reactions = reactionsCallResult.parseJson()["result"]
-
-  var pinnedMessages: JsonNode
-  var pinnedMessagesCallSuccess: bool
-  let pinnedMessagesCallResult = status_chat.rpcPinnedChatMessages(arg.chatId, newJString(""), 20, pinnedMessagesCallSuccess)
-  if(pinnedMessagesCallSuccess):
-    pinnedMessages = pinnedMessagesCallResult.parseJson()["result"]
-
-  let responseJson = %*{
-    "chatId": arg.chatId,
-    "messages": messages,
-    "reactions": reactions,
-    "pinnedMessages": pinnedMessages
-  }
-  arg.finish(responseJson)
-
 const asyncActivityNotificationLoadTask: Task = proc(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[AsyncActivityNotificationLoadTaskArg](argEncoded)
   var activityNotifications: JsonNode
@@ -90,15 +58,6 @@ const asyncActivityNotificationLoadTask: Task = proc(argEncoded: string) {.gcsaf
     "activityNotifications": activityNotifications
   }
   arg.finish(responseJson)
-
-proc asyncMessageLoad[T](self: T, slot: string, chatId: string) =
-  let arg = AsyncMessageLoadTaskArg(
-    tptr: cast[ByteAddress](asyncMessageLoadTask),
-    vptr: cast[ByteAddress](self.vptr),
-    slot: slot,
-    chatId: chatId
-  )
-  self.status.tasks.threadpool.start(arg)
 
 proc asyncActivityNotificationLoad[T](self: T, slot: string) =
   let arg = AsyncActivityNotificationLoadTaskArg(
@@ -115,21 +74,17 @@ QtObject:
       formatInputView: FormatInputView
       ensView: EnsView
       channelView*: ChannelView
+      messageView*: MessageView
       currentSuggestions*: SuggestionsList
       activityNotificationList*: ActivityNotificationList
       callResult: string
-      messageList*: OrderedTable[string, ChatMessageList]
-      pinnedMessagesList*: OrderedTable[string, ChatMessageList]
       reactions*: ReactionView
       stickers*: StickersView
       groups*: GroupsView
       transactions*: TransactionsView
       communities*: CommunitiesView
       replyTo: string
-      channelOpenTime*: Table[string, int64]
       connected: bool
-      unreadMessageCnt: int
-      loadingMessages: bool
       timelineChat: Chat
       pubKey*: string
 
@@ -140,18 +95,11 @@ QtObject:
     self.ensView.delete
     self.currentSuggestions.delete
     self.activityNotificationList.delete
-    for msg in self.messageList.values:
-      msg.delete
-    for msg in self.pinnedMessagesList.values:
-      msg.delete
     self.reactions.delete
     self.stickers.delete
     self.groups.delete
     self.transactions.delete
-    self.messageList = initOrderedTable[string, ChatMessageList]()
-    self.pinnedMessagesList = initOrderedTable[string, ChatMessageList]()
     self.communities.delete
-    self.channelOpenTime = initTable[string, int64]()
     self.QAbstractListModel.delete
 
   proc newChatsView*(status: Status): ChatsView =
@@ -161,20 +109,20 @@ QtObject:
     result.ensView = newEnsView(status)
     result.communities = newCommunitiesView(status)
     result.channelView = newChannelView(status, result.communities)
+    result.messageView = newMessageView(status, result.channelView, result.communities)
     result.connected = false
     result.currentSuggestions = newSuggestionsList()
     result.activityNotificationList = newActivityNotificationList(status)
-    result.messageList = initOrderedTable[string, ChatMessageList]()
-    result.pinnedMessagesList = initOrderedTable[string, ChatMessageList]()
     result.reactions = newReactionView(status, result.messageList.addr, result.channelView.activeChannel)
     result.stickers = newStickersView(status, result.channelView.activeChannel)
     result.groups = newGroupsView(status,result.channelView.activeChannel)
     result.transactions = newTransactionsView(status)
-    result.unreadMessageCnt = 0
-    result.loadingMessages = false
-    result.messageList[status_utils.getTimelineChatId()] = newChatMessageList(status_utils.getTimelineChatId(), result.status, false)
 
     result.setup()
+
+  proc setPubKey*(pubKey: string) =
+    self.pubKey = pubKey
+    self.messageView.pubKey = pubKey
 
   proc getFormatInput(self: ChatsView): QVariant {.slot.} = newQVariant(self.formatInputView)
   QtProperty[QVariant] formatInputView:
@@ -192,69 +140,12 @@ QtObject:
   QtProperty[QVariant] channelView:
     read = getChannelView
 
-  proc getMessageListIndexById(self: ChatsView, id: string): int
-
-  proc replaceMentionsWithPubKeys(self: ChatsView, mentions: seq[string], contacts: seq[Profile], message: string, predicate: proc (contact: Profile): string): string =
-    var updatedMessage = message
-    for mention in mentions:
-      let matches = contacts.filter(c => "@" & predicate(c).toLowerAscii == mention.toLowerAscii).map(c => c.address)
-      if matches.len > 0:
-        let pubKey = matches[0]
-        var startIndex = 0
-        var index = updatedMessage.find(mention)
-
-        while index > -1:
-          if index == 0 or updatedMessage[index-1] == ' ':
-            updatedMessage = updatedMessage.replaceWord(mention, '@' & pubKey)
-          startIndex = index + mention.len
-          index = updatedMessage.find(mention, startIndex)
-
-    result = updatedMessage
+  proc getMessageView*(self: ChatsView): QVariant {.slot.} = newQVariant(self.messageView)
+  QtProperty[QVariant] messageView:
+    read = getMessageView
 
   proc plainText(self: ChatsView, input: string): string {.slot.} =
     result = plain_text(input)
-
-  proc sendMessage*(self: ChatsView, message: string, replyTo: string, contentType: int = ContentType.Message.int, isStatusUpdate: bool = false, contactsString: string = "") {.slot.} =
-    let aliasPattern = re(r"(@[A-z][a-z]+ [A-z][a-z]* [A-z][a-z]*)", flags = {reStudy, reIgnoreCase})
-    let ensPattern = re(r"(@\w+(?=(\.stateofus)?\.eth))", flags = {reStudy, reIgnoreCase})
-    let namePattern = re(r"(@\w+)", flags = {reStudy, reIgnoreCase})
-
-    var contacts: seq[Profile]
-    if (contactsString == ""):
-      contacts = self.status.contacts.getContacts()
-    else:
-      let contactsJSON = parseJson(contactsString)
-      contacts = @[]
-      for contact in contactsJSON:
-        contacts.add(Profile(
-          address: contact["address"].str,
-          alias: contact["alias"].str,
-          ensName: contact["ensName"].str
-        ))
-
-    let aliasMentions = findAll(message, aliasPattern)
-    let ensMentions = findAll(message, ensPattern)
-    let nameMentions = findAll(message, namePattern)
-
-    var m = self.replaceMentionsWithPubKeys(aliasMentions, contacts, message, (c => c.alias))
-    m = self.replaceMentionsWithPubKeys(ensMentions, contacts, m, (c => c.ensName))
-    m = self.replaceMentionsWithPubKeys(nameMentions, contacts, m, (c => c.ensName.split(".")[0]))
-
-    var channelId = self.channelView.activeChannel.id
-
-    if isStatusUpdate:
-      channelId = "@" & self.pubKey
-
-    self.status.chat.sendMessage(channelId, m, replyTo, contentType)
- 
-  proc verifyMessageSent*(self: ChatsView, data: string) {.slot.} =
-    let messageData = data.parseJson
-    self.messageList[messageData["chatId"].getStr].checkTimeout(messageData["id"].getStr)
-
-  proc resendMessage*(self: ChatsView, chatId: string, messageId: string) {.slot.} =
-    self.status.messages.trackMessage(messageId, chatId)
-    self.status.chat.resendMessage(messageId)
-    self.messageList[chatId].resetTimeOut(messageId)
 
   proc sendImage*(self: ChatsView, imagePath: string, isStatusUpdate: bool = false): string {.slot.} =
     result = ""
@@ -291,11 +182,7 @@ QtObject:
       error "Error sending images", msg = e.msg
       result = fmt"Error sending images: {e.msg}"
 
-  proc sendingMessage*(self: ChatsView) {.signal.}
-
   proc appReady*(self: ChatsView) {.signal.}
-
-  proc sendingMessageFailed*(self: ChatsView) {.signal.}
 
   proc alias*(self: ChatsView, pubKey: string): string {.slot.} =
     if (pubKey == ""):
@@ -322,48 +209,7 @@ QtObject:
     read = getActivityNotificationList
     notify = activityNotificationsChanged
 
-  proc upsertChannel(self: ChatsView, channel: string) =
-    var chat: Chat = nil
-    if self.status.chat.channels.hasKey(channel):
-      chat = self.status.chat.channels[channel]
-    else:
-      chat = self.communities.getChannel(channel)
-    if not self.messageList.hasKey(channel):
-      self.beginInsertRows(newQModelIndex(), self.messageList.len, self.messageList.len)
-      self.messageList[channel] = newChatMessageList(channel, self.status, not chat.isNil and chat.chatType != ChatType.Profile)
-      self.channelOpenTime[channel] = now().toTime.toUnix * 1000
-      self.endInsertRows();
-    if not self.pinnedMessagesList.hasKey(channel):
-      self.pinnedMessagesList[channel] = newChatMessageList(channel, self.status, false)
-
-  proc messagePushed*(self: ChatsView, messageIndex: int) {.signal.}
-  proc newMessagePushed*(self: ChatsView) {.signal.}
-
   proc messageNotificationPushed*(self: ChatsView, chatId: string, text: string, messageType: string, chatType: int, timestamp: string, identicon: string, username: string, hasMention: bool, isAddedContact: bool, channelName: string) {.signal.}
-
-  proc messagesCleared*(self: ChatsView) {.signal.}
-
-  proc clearMessages*(self: ChatsView, id: string) =
-    let channel = self.channelView.getChannelById(id)
-    if (channel == nil):
-      return
-    self.messageList[id].clear(not channel.isNil and channel.chatType != ChatType.Profile)
-    self.messagesCleared()
-
-  proc isAddedContact*(self: ChatsView, id: string): bool {.slot.} =
-    result = self.status.contacts.isAdded(id)
-
-  proc pushPinnedMessages*(self:ChatsView, pinnedMessages: var seq[Message]) =
-    for msg in pinnedMessages.mitems:
-      self.upsertChannel(msg.chatId)
-
-      var message = self.messageList[msg.chatId].getMessageById(msg.id)
-      message.pinnedBy = msg.pinnedBy
-      message.isPinned = true
-
-      self.pinnedMessagesList[msg.chatId].add(message)
-      # put the message as pinned in the message list
-      self.messageList[msg.chatId].changeMessagePinned(msg.id, true, msg.pinnedBy)
 
   proc pushActivityCenterNotifications*(self:ChatsView, activityCenterNotifications: seq[ActivityCenterNotification]) =
     self.activityNotificationList.addActivityNotificationItemsToList(activityCenterNotifications)
@@ -379,37 +225,6 @@ QtObject:
       self.channelView.previousActiveChannelIndex = self.channelView.chats.chats.findIndexById(self.channelView.activeChannel.id)
     self.channelView.activeChannel.setChatItem(self.timelineChat)
     self.channelView.activeChannelChanged()
-
-  proc pushMessages*(self:ChatsView, messages: var seq[Message]) =
-    for msg in messages.mitems:
-      self.upsertChannel(msg.chatId)
-      msg.userName = self.status.chat.getUserName(msg.fromAuthor, msg.alias)
-      var msgIndex:int;
-      if self.status.chat.channels.hasKey(msg.chatId):
-        let chat = self.status.chat.channels[msg.chatId]
-        if (chat.chatType == ChatType.Profile):
-          let timelineChatId = status_utils.getTimelineChatId()
-          self.messageList[timelineChatId].add(msg)
-          if self.channelView.activeChannel.id == timelineChatId: self.channelView.activeChannelChanged()
-          msgIndex = self.messageList[timelineChatId].messages.len - 1
-        else:
-          self.messageList[msg.chatId].add(msg)
-          msgIndex = self.messageList[msg.chatId].messages.len - 1
-      self.messagePushed(msgIndex)
-      if self.channelOpenTime.getOrDefault(msg.chatId, high(int64)) < msg.timestamp.parseFloat.fromUnixFloat.toUnix:
-        var channel = self.channelView.chats.getChannelById(msg.chatId)
-        if (channel == nil):
-          channel = self.communities.getChannel(msg.chatId)
-          if (channel == nil):
-            continue
-
-        if msg.chatId == self.channelView.activeChannel.id:
-          discard self.status.chat.markMessagesSeen(msg.chatId, @[msg.id])
-          self.newMessagePushed()
-
-        if not channel.muted:
-          let isAddedContact = channel.chatType.isOneToOne and self.isAddedContact(channel.id)
-          self.messageNotificationPushed(msg.chatId, escape_html(msg.text), msg.messageType, channel.chatType.int, msg.timestamp, msg.identicon, msg.userName, msg.hasMention, isAddedContact, channel.name)
 
   proc updateUsernames*(self:ChatsView, contacts: seq[Profile]) =
     if contacts.len > 0:
@@ -435,44 +250,10 @@ QtObject:
           self.channelView.activeChannel.setChatItem(channel)
           self.channelView.activeChannelChanged()
 
-
-  proc markMessageAsSent*(self:ChatsView, chat: string, messageId: string) =
-    if self.messageList.contains(chat):
-      self.messageList[chat].markMessageAsSent(messageId)
-    else:
-      error "Message could not be marked as sent", chat, messageId
-  
-  proc getMessageIndex(self: ChatsView, chatId: string, messageId: string): int {.slot.} =
-    if (not self.messageList.hasKey(chatId)):
-      return -1
-    result = self.messageList[chatId].getMessageIndex(messageId)
-
-  proc getMessageData(self: ChatsView, chatId: string,  index: int, data: string): string {.slot.} =
-    if (not self.messageList.hasKey(chatId)):
-      return
-
-    return self.messageList[chatId].getMessageData(index, data)
-
-  proc getMessageList(self: ChatsView): QVariant {.slot.} =
-    self.upsertChannel(self.channelView.activeChannel.id)
-    return newQVariant(self.messageList[self.channelView.activeChannel.id])
-
-  QtProperty[QVariant] messageList:
-    read = getMessageList
-    notify = activeChannelChanged
-
-  proc getPinnedMessagesList(self: ChatsView): QVariant {.slot.} =
-    self.upsertChannel(self.channelView.activeChannel.id)
-    return newQVariant(self.pinnedMessagesList[self.channelView.activeChannel.id])
-
-  QtProperty[QVariant] pinnedMessagesList:
-    read = getPinnedMessagesList
-    notify = activeChannelChanged
-
   proc pushChatItem*(self: ChatsView, chatItem: Chat) =
     discard self.channelView.chats.addChatItemToList(chatItem)
     self.messagePushed(self.messageList[chatItem.id].messages.len - 1)
-  
+
   proc setTimelineChat*(self: ChatsView, chatItem: Chat) =
     self.timelineChat = chatItem
 
@@ -493,53 +274,8 @@ QtObject:
       return -1
     selectedChannel.chatType.int
 
-  proc messagesLoaded*(self: ChatsView) {.signal.}
-
-  proc loadMoreMessages*(self: ChatsView) {.slot.} =
-    trace "Loading more messages", chaId = self.channelView.activeChannel.id
-    self.status.chat.chatMessages(self.channelView.activeChannel.id, false)
-    self.status.chat.chatReactions(self.channelView.activeChannel.id, false)
-    self.messagesLoaded();
-
-  proc loadMoreMessagesWithIndex*(self: ChatsView, channelIndex: int) {.slot.} =
-    if (self.channelView.chats.chats.len == 0): return
-    let selectedChannel = self.channelView.getChannel(channelIndex)
-    if (selectedChannel == nil): return
-    trace "Loading more messages", chaId = selectedChannel.id
-    self.status.chat.chatMessages(selectedChannel.id, false)
-    self.status.chat.chatReactions(selectedChannel.id, false)
-    self.messagesLoaded();
-
-  proc loadingMessagesChanged*(self: ChatsView, value: bool) {.signal.}
-
-  proc asyncMessageLoad*(self: ChatsView, chatId: string) {.slot.} =
-    self.asyncMessageLoad("asyncMessageLoaded", chatId)
-
   proc asyncActivityNotificationLoad*(self: ChatsView) {.slot.} =
     self.asyncActivityNotificationLoad("asyncActivityNotificationLoaded")
-
-  proc asyncMessageLoaded*(self: ChatsView, rpcResponse: string) {.slot.} =
-    let
-      rpcResponseObj = rpcResponse.parseJson
-      chatId = rpcResponseObj{"chatId"}.getStr
-
-    if chatId == "": # .getStr() returns "" when field is not found
-      return
-
-    let messages = rpcResponseObj{"messages"}
-    if(messages != nil and messages.kind != JNull):
-      let chatMessages = libstatus_chat.parseChatMessagesResponse(messages)
-      self.status.chat.chatMessages(chatId, true, chatMessages[0], chatMessages[1])
-
-    let rxns = rpcResponseObj{"reactions"}
-    if(rxns != nil and rxns.kind != JNull):
-      let reactions = status_chat.parseReactionsResponse(chatId, rxns)
-      self.status.chat.chatReactions(chatId, true, reactions[0], reactions[1])
-
-    let pinnedMsgs = rpcResponseObj{"pinnedMessages"}
-    if(pinnedMsgs != nil and pinnedMsgs.kind != JNull):
-      let pinnedMessages = libstatus_chat.parseChatMessagesResponse(pinnedMsgs)
-      self.status.chat.pinnedMessagesByChatID(chatId, pinnedMessages[0], pinnedMessages[1])
 
   proc asyncActivityNotificationLoaded*(self: ChatsView, rpcResponse: string) {.slot.} =
     let rpcResponseObj = rpcResponse.parseJson
@@ -547,34 +283,6 @@ QtObject:
     if(rpcResponseObj["activityNotifications"].kind != JNull):
       let activityNotifications = parseActivityCenterNotifications(rpcResponseObj["activityNotifications"])
       self.status.chat.activityCenterNotifications(activityNotifications[0], activityNotifications[1])
-
-  proc hideLoadingIndicator*(self: ChatsView) {.slot.} =
-    self.loadingMessages = false
-    self.loadingMessagesChanged(false)
-
-  proc setLoadingMessages*(self: ChatsView, value: bool) {.slot.} =
-    self.loadingMessages = value
-    self.loadingMessagesChanged(value)
-
-  proc isLoadingMessages(self: ChatsView): QVariant {.slot.} =
-    return newQVariant(self.loadingMessages)
-
-  QtProperty[QVariant] loadingMessages:
-    read = isLoadingMessages
-    write = setLoadingMessages
-    notify = loadingMessagesChanged
-
-  proc requestMoreMessages*(self: ChatsView, fetchRange: int) {.slot.} =
-    self.loadingMessages = true
-    self.loadingMessagesChanged(true)
-    let mailserverWorker = self.status.tasks.marathon[MailserverWorker().name]
-    let task = RequestMessagesTaskArg( `method`: "requestMoreMessages", chatId: self.channelView.activeChannel.id)
-    mailserverWorker.start(task)
-
-  proc fillGaps*(self: ChatsView, messageId: string) {.slot.} =
-    self.loadingMessages = true
-    self.loadingMessagesChanged(true)
-    discard self.status.mailservers.fillGaps(self.channelView.activeChannel.id, @[messageId])
 
   proc removeChat*(self: ChatsView, chatId: string) =
     discard self.channelView.chats.removeChatItemFromList(chatId)
@@ -596,23 +304,6 @@ QtObject:
     self.messageList[status_utils.getTimelineChatId()].deleteMessagesByChatId(chatId)
     self.channelView.activeChannelChanged()
 
-  proc unreadMessages*(self: ChatsView): int {.slot.} =
-    result = self.unreadMessageCnt
-
-  proc unreadMessagesCntChanged*(self: ChatsView) {.signal.}
-
-  QtProperty[int] unreadMessagesCount:
-    read = unreadMessages
-    notify = unreadMessagesCntChanged
-
-  proc calculateUnreadMessages*(self: ChatsView) =
-    var unreadTotal = 0
-    for chatItem in self.channelView.chats.chats:
-      unreadTotal = unreadTotal + chatItem.unviewedMessagesCount
-    if unreadTotal != self.unreadMessageCnt:
-      self.unreadMessageCnt = unreadTotal
-      self.unreadMessagesCntChanged()
-
   proc updateChats*(self: ChatsView, chats: seq[Chat]) =
     for chat in chats:
       if (chat.communityId != ""):
@@ -628,9 +319,6 @@ QtObject:
         self.channelView.contextChannel.setChatItem(chat)
         self.channelView.contextChannelChanged()
     self.calculateUnreadMessages()
-
-  proc deleteMessage*(self: ChatsView, channelId: string, messageId: string) =
-    self.messageList[channelId].deleteMessage(messageId)
 
   proc isConnected*(self: ChatsView): bool {.slot.} =
     result = self.status.network.isConnected
@@ -683,54 +371,6 @@ QtObject:
     {
       ChatViewRoles.MessageList.int:"messages"
     }.toTable
-
-  proc removeMessagesByUserId(self: ChatsView, publicKey: string) {.slot.} =
-    for k in self.messageList.keys:
-      self.messageList[k].removeMessagesByUserId(publicKey)
-
-  proc getMessageListIndex(self: ChatsView): int {.slot.} =
-    var idx = -1
-    for msg in toSeq(self.messageList.values):
-      idx = idx + 1
-      if(self.channelView.activeChannel.id == msg.id): return idx
-    return idx
-
-  proc getMessageListIndexById(self: ChatsView, id: string): int {.slot.} =
-    var idx = -1
-    for msg in toSeq(self.messageList.values):
-      idx = idx + 1
-      if(id == msg.id): return idx
-    return idx
-
-  proc addPinMessage*(self: ChatsView, messageId: string, chatId: string, pinnedBy: string) =
-    self.upsertChannel(chatId)
-    self.messageList[chatId].changeMessagePinned(messageId, true, pinnedBy)
-    var message = self.messageList[chatId].getMessageById(messageId)
-    message.pinnedBy = pinnedBy
-    self.pinnedMessagesList[chatId].add(message)
-
-  proc removePinMessage*(self: ChatsView, messageId: string, chatId: string) =
-    self.upsertChannel(chatId)
-    self.messageList[chatId].changeMessagePinned(messageId, false, "")
-    try:
-      self.pinnedMessagesList[chatId].remove(messageId)
-    except Exception as e:
-      error "Error removing ", msg = e.msg
-
-  proc pinMessage*(self: ChatsView, messageId: string, chatId: string) {.slot.} =
-    self.status.chat.setPinMessage(messageId, chatId, true)
-    self.addPinMessage(messageId, chatId, self.pubKey)
-
-  proc unPinMessage*(self: ChatsView, messageId: string, chatId: string) {.slot.} =
-    self.status.chat.setPinMessage(messageId, chatId, false)
-    self.removePinMessage(messageId, chatId)
-
-  proc addPinnedMessages*(self: ChatsView, pinnedMessages: seq[Message]) =
-    for pinnedMessage in pinnedMessages:
-      if (pinnedMessage.isPinned):
-        self.addPinMessage(pinnedMessage.id, pinnedMessage.localChatId, pinnedMessage.pinnedBy)
-      else:
-        self.removePinMessage(pinnedMessage.id, pinnedMessage.localChatId)
 
   proc isActiveMailserverResult(self: ChatsView, resultEncoded: string) {.slot.} =
     let isActiveMailserverAvailable = decode[bool](resultEncoded)

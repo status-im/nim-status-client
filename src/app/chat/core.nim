@@ -36,7 +36,8 @@ proc init*(self: ChatController) =
   let pubKey = self.status.settings.getSetting[:string](Setting.PublicKey, "0x0")
   let messagesFromContactsOnly = self.status.settings.getSetting[:bool](Setting.MessagesFromContactsOnly, false, true)
 
-  self.view.pubKey = pubKey
+  # self.view.pubKey = pubKey
+  self.view.setPubKey(pubKey)
   self.status.chat.init(pubKey, messagesFromContactsOnly)
   self.status.stickers.init()
   self.view.reactions.init()
