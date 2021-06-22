@@ -25,6 +25,7 @@ Item {
 
     property string profileImage: realChatType === Constants.chatTypeOneToOne ? appMain.getProfileImage(chatId) || ""  : ""
 
+    width: childrenRect.width
     height: 48
 
     Connections {
@@ -51,7 +52,7 @@ Item {
     Item {
         id: nameAndInfo
         height: chatName.height + chatInfo.height
-        width: parent.width
+        width: childrenRect.width
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: chatIdenticon.right
         anchors.leftMargin: Style.current.smallPadding
@@ -115,8 +116,7 @@ Item {
         StyledText {
             id: chatInfo
             color: Style.current.secondaryText
-            wrapMode: Text.Wrap
-            width: parent.width
+            width: implicitWidth > 300 ? 300 : implicitWidth
             elide: Text.ElideRight
             text: {
                 if (root.chatType === Constants.chatTypeCommunity) {
@@ -145,6 +145,7 @@ Item {
             font.pixelSize: 12
             anchors.top: chatName.bottom
             anchors.topMargin: 2
+            anchors.left: chatName.left
         }
 
         Item {
