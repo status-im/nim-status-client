@@ -544,7 +544,7 @@ QtObject:
 
     let pinnedMsgs = rpcResponseObj{"pinnedMessages"}
     if(pinnedMsgs != nil and pinnedMsgs.kind != JNull):
-      let pinnedMessages = libstatus_chat.parseChatMessagesResponse(pinnedMsgs)
+      let pinnedMessages = libstatus_chat.parseChatPinnedMessagesResponse(pinnedMsgs)
       self.status.chat.pinnedMessagesByChatID(chatId, pinnedMessages[0], pinnedMessages[1])
 
   proc asyncActivityNotificationLoaded*(self: ChatsView, rpcResponse: string) {.slot.} =

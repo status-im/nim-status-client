@@ -597,3 +597,6 @@ proc parseReactionsResponse*(chatId: string, rpcResult: JsonNode): (string, seq[
 
 proc parseChatMessagesResponse*(rpcResult: JsonNode): (string, seq[Message]) =
   result = status_chat.parseChatMessagesResponse(rpcResult)
+
+proc parseChatPinnedMessagesResponse*(rpcResult: JsonNode): (string, seq[Message]) =
+  result = status_chat.parseChatPinnedMessagesResponse(rpcResult)
