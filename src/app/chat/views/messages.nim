@@ -75,7 +75,7 @@ QtObject:
     unreadMessageCnt: int
     channelOpenTime*: Table[string, int64]
 
-  proc setup(self: MessageView) = self.QObject.setup
+  proc setup(self: MessageView) = self.QAbstractListModel.setup
   proc delete*(self: MessageView) =
     for msg in self.messageList.values:
       msg.delete
