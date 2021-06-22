@@ -1,6 +1,6 @@
 import NimQml, Tables, json, sequtils, chronicles, times, re, sugar, strutils, os, strformat, algorithm
 
-import ../../../status/[status, contacts, types]
+import ../../../status/[status, contacts, types, mailservers]
 import ../../../status/signals/types as signal_types
 import ../../../status/ens as status_ens
 import ../../../status/chat as status_chat
@@ -11,6 +11,9 @@ import ../../../status/profile/profile
 import ../../../status/tasks/[qt, task_runner_impl]
 
 import communities, chat_item, channels_list, communities, community_list, message_list, channel
+
+# TODO: remove me
+import ../../../status/libstatus/chat as libstatus_chat
 
 logScope:
   topics = "messages-view"
@@ -96,7 +99,7 @@ QtObject:
     result.unreadMessageCnt = 0
     result.setup
 
-  proc getMessageListIndexById(self: MessageView, id: string): int
+  # proc getMessageListIndexById(self: MessageView, id: string): int
 
   proc replaceMentionsWithPubKeys(self: MessageView, mentions: seq[string], contacts: seq[Profile], message: string, predicate: proc (contact: Profile): string): string =
     var updatedMessage = message
@@ -173,7 +176,7 @@ QtObject:
     self.messageList[id].clear(not channel.isNil and channel.chatType != ChatType.Profile)
     self.messagesCleared()
 
-  proc upsertChannel(self: MessageView, channel: string) =
+  proc upsertChannel*(self: MessageView, channel: string) =
     var chat: Chat = nil
     if self.status.chat.channels.hasKey(channel):
       chat = self.status.chat.channels[channel]
@@ -201,6 +204,8 @@ QtObject:
 
   proc isAddedContact*(self: MessageView, id: string): bool {.slot.} =
     result = self.status.contacts.isAdded(id)
+
+  proc messageNotificationPushed*(self: MessageView, chatId: string, text: string, messageType: string, chatType: int, timestamp: string, identicon: string, username: string, hasMention: bool, isAddedContact: bool, channelName: string) {.signal.}
 
   proc pushMessages*(self:MessageView, messages: var seq[Message]) =
     for msg in messages.mitems:
@@ -327,13 +332,6 @@ QtObject:
     write = setLoadingMessages
     notify = loadingMessagesChanged
 
-  proc requestMoreMessages*(self: MessageView, fetchRange: int) {.slot.} =
-    self.loadingMessages = true
-    self.loadingMessagesChanged(true)
-    let mailserverWorker = self.status.tasks.marathon[MailserverWorker().name]
-    let task = RequestMessagesTaskArg( `method`: "requestMoreMessages", chatId: self.channelView.activeChannel.id)
-    mailserverWorker.start(task)
-
   proc fillGaps*(self: MessageView, messageId: string) {.slot.} =
     self.loadingMessages = true
     self.loadingMessagesChanged(true)
@@ -370,7 +368,7 @@ QtObject:
       if(self.channelView.activeChannel.id == msg.id): return idx
     return idx
 
-  proc getMessageListIndexById(self: MessageView, id: string): int {.slot.} =
+  proc getMessageListIndexById*(self: MessageView, id: string): int {.slot.} =
     var idx = -1
     for msg in toSeq(self.messageList.values):
       idx = idx + 1
@@ -406,3 +404,18 @@ QtObject:
         self.addPinMessage(pinnedMessage.id, pinnedMessage.localChatId, pinnedMessage.pinnedBy)
       else:
         self.removePinMessage(pinnedMessage.id, pinnedMessage.localChatId)
+
+  method rowCount*(self: MessageView, index: QModelIndex = nil): int = 
+    result = self.messageList.len
+
+  method data(self: MessageView, index: QModelIndex, role: int): QVariant =
+    if not index.isValid:
+      return
+    if index.row < 0 or index.row >= self.messageList.len:
+      return
+    return newQVariant(toSeq(self.messageList.values)[index.row])
+
+  method roleNames(self: MessageView): Table[int, string] =
+    {
+      ChatViewRoles.MessageList.int:"messages"
+    }.toTable

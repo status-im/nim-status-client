@@ -26,7 +26,7 @@ proc handleSignals(self: ChatController) =
     for messageId in data.messageIds:
       if self.status.messages.messages.hasKey(messageId):
         let chatId = self.status.messages.messages[messageId].chatId
-        self.view.messageList[chatId].checkTimeout(messageId)
+        self.view.messageView.messageList[chatId].checkTimeout(messageId)
 
   self.status.events.on(SignalType.CommunityFound.event) do(e: Args):
     var data = CommunitySignal(e)
@@ -41,4 +41,3 @@ proc handleSignals(self: ChatController) =
     # TODO: retry mailserver request up to N times or change mailserver
     # If > N, then
     self.view.hideLoadingIndicator()
-    

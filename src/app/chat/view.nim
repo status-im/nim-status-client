@@ -113,14 +113,14 @@ QtObject:
     result.connected = false
     result.currentSuggestions = newSuggestionsList()
     result.activityNotificationList = newActivityNotificationList(status)
-    result.reactions = newReactionView(status, result.messageList.addr, result.channelView.activeChannel)
+    result.reactions = newReactionView(status, result.messageView.messageList.addr, result.channelView.activeChannel)
     result.stickers = newStickersView(status, result.channelView.activeChannel)
     result.groups = newGroupsView(status,result.channelView.activeChannel)
     result.transactions = newTransactionsView(status)
 
     result.setup()
 
-  proc setPubKey*(pubKey: string) =
+  proc setPubKey*(self: ChatsView, pubKey: string) =
     self.pubKey = pubKey
     self.messageView.pubKey = pubKey
 
@@ -209,8 +209,6 @@ QtObject:
     read = getActivityNotificationList
     notify = activityNotificationsChanged
 
-  proc messageNotificationPushed*(self: ChatsView, chatId: string, text: string, messageType: string, chatType: int, timestamp: string, identicon: string, username: string, hasMention: bool, isAddedContact: bool, channelName: string) {.signal.}
-
   proc pushActivityCenterNotifications*(self:ChatsView, activityCenterNotifications: seq[ActivityCenterNotification]) =
     self.activityNotificationList.addActivityNotificationItemsToList(activityCenterNotifications)
     self.activityNotificationsChanged()
@@ -229,8 +227,8 @@ QtObject:
   proc updateUsernames*(self:ChatsView, contacts: seq[Profile]) =
     if contacts.len > 0:
       # Updating usernames for all the messages list
-      for k in self.messageList.keys:
-        self.messageList[k].updateUsernames(contacts)
+      for k in self.messageView.messageList.keys:
+        self.messageView.messageList[k].updateUsernames(contacts)
       self.channelView.activeChannel.contactsUpdated()
 
   proc updateChannelForContacts*(self: ChatsView, contacts: seq[Profile]) =
@@ -252,7 +250,7 @@ QtObject:
 
   proc pushChatItem*(self: ChatsView, chatItem: Chat) =
     discard self.channelView.chats.addChatItemToList(chatItem)
-    self.messagePushed(self.messageList[chatItem.id].messages.len - 1)
+    self.messageView.messagePushed(self.messageView.messageList[chatItem.id].messages.len - 1)
 
   proc setTimelineChat*(self: ChatsView, chatItem: Chat) =
     self.timelineChat = chatItem
@@ -286,22 +284,22 @@ QtObject:
 
   proc removeChat*(self: ChatsView, chatId: string) =
     discard self.channelView.chats.removeChatItemFromList(chatId)
-    if (self.messageList.hasKey(chatId)):
-      let index = self.getMessageListIndexById(chatId)
+    if (self.messageView.messageList.hasKey(chatId)):
+      let index = self.messageView.getMessageListIndexById(chatId)
       self.beginRemoveRows(newQModelIndex(), index, index)
-      self.messageList[chatId].delete
-      self.messageList.del(chatId)
+      self.messageView.messageList[chatId].delete
+      self.messageView.messageList.del(chatId)
       self.endRemoveRows()
 
   proc toggleReaction*(self: ChatsView, messageId: string, emojiId: int) {.slot.} =
     if self.channelView.activeChannel.id == status_utils.getTimelineChatId():
-      let message = self.messageList[status_utils.getTimelineChatId()].getMessageById(messageId)
+      let message = self.messageView.messageList[status_utils.getTimelineChatId()].getMessageById(messageId)
       self.reactions.toggle(messageId, message.chatId, emojiId)
     else:
       self.reactions.toggle(messageId, self.channelView.activeChannel.id, emojiId)
 
   proc removeMessagesFromTimeline*(self: ChatsView, chatId: string) =
-    self.messageList[status_utils.getTimelineChatId()].deleteMessagesByChatId(chatId)
+    self.messageView.messageList[status_utils.getTimelineChatId()].deleteMessagesByChatId(chatId)
     self.channelView.activeChannelChanged()
 
   proc updateChats*(self: ChatsView, chats: seq[Chat]) =
@@ -309,7 +307,7 @@ QtObject:
       if (chat.communityId != ""):
         self.communities.updateCommunityChat(chat)
         return
-      self.upsertChannel(chat.id)
+      self.messageView.upsertChannel(chat.id)
       self.channelView.chats.updateChat(chat)
       if(self.channelView.activeChannel.id == chat.id):
         self.channelView.activeChannel.setChatItem(chat)
@@ -318,7 +316,7 @@ QtObject:
       if self.channelView.contextChannel.id == chat.id:
         self.channelView.contextChannel.setChatItem(chat)
         self.channelView.contextChannelChanged()
-    self.calculateUnreadMessages()
+    self.messageView.calculateUnreadMessages()
 
   proc isConnected*(self: ChatsView): bool {.slot.} =
     result = self.status.network.isConnected
@@ -357,32 +355,17 @@ QtObject:
   QtProperty[QVariant] transactions:
     read = getTransactions
 
-  method rowCount*(self: ChatsView, index: QModelIndex = nil): int = 
-    result = self.messageList.len
-
-  method data(self: ChatsView, index: QModelIndex, role: int): QVariant =
-    if not index.isValid:
-      return
-    if index.row < 0 or index.row >= self.messageList.len:
-      return
-    return newQVariant(toSeq(self.messageList.values)[index.row])
-
-  method roleNames(self: ChatsView): Table[int, string] =
-    {
-      ChatViewRoles.MessageList.int:"messages"
-    }.toTable
-
   proc isActiveMailserverResult(self: ChatsView, resultEncoded: string) {.slot.} =
     let isActiveMailserverAvailable = decode[bool](resultEncoded)
     if isActiveMailserverAvailable:
-      self.setLoadingMessages(true)
+      self.messageView.setLoadingMessages(true)
       let
         mailserverWorker = self.status.tasks.marathon[MailserverWorker().name]
         task = RequestMessagesTaskArg(`method`: "requestMessages")
       mailserverWorker.start(task)
 
   proc requestAllHistoricMessagesResult(self: ChatsView, resultEncoded: string) {.slot.} =
-    self.setLoadingMessages(true)
+    self.messageView.setLoadingMessages(true)
 
   proc createCommunityChannel*(self: ChatsView, communityId: string, name: string, description: string, categoryId: string): string {.slot.} =
     try:
@@ -421,3 +404,43 @@ QtObject:
 
   proc activeChannelChanged*(self: ChatsView) =
     self.channelView.activeChannelChanged()
+
+  proc requestMoreMessages*(self: ChatsView, fetchRange: int) {.slot.} =
+    self.messageView.loadingMessages = true
+    self.messageView.loadingMessagesChanged(true)
+    let mailserverWorker = self.status.tasks.marathon[MailserverWorker().name]
+    let task = RequestMessagesTaskArg( `method`: "requestMoreMessages", chatId: self.channelView.activeChannel.id)
+    mailserverWorker.start(task)
+
+  proc pushMessages*(self: ChatsView, messages: var seq[Message]) =
+    self.messageView.pushMessages(messages)
+
+  proc pushPinnedMessages*(self: ChatsView, pinnedMessages: var seq[Message]) =
+    self.messageView.pushPinnedMessages(pinnedMessages)
+
+  proc hideLoadingIndicator*(self: ChatsView) {.slot.} =
+    self.messageView.hideLoadingIndicator()
+
+  proc deleteMessage*(self: ChatsView, channelId: string, messageId: string) =
+    self.messageView.deleteMessage(channelId, messageId)
+
+  proc addPinnedMessages*(self: ChatsView, pinnedMessages: seq[Message]) =
+    self.messageView.addPinnedMessages(pinnedMessages)
+
+  proc clearMessages*(self: ChatsView, id: string) =
+    self.messageView.clearMessages(id)
+
+  proc asyncMessageLoad*(self: ChatsView, chatId: string) {.slot.} =
+    self.messageView.asyncMessageLoad(chatId)
+
+  proc calculateUnreadMessages*(self: ChatsView) =
+    self.messageView.calculateUnreadMessages()
+
+  proc sendingMessage*(self: ChatsView) = 
+    self.messageView.sendingMessage()
+
+  proc sendingMessageFailed*(self: ChatsView) =
+    self.messageView.sendingMessageFailed()
+
+  proc markMessageAsSent*(self: ChatsView, chat: string, messageId: string) =
+    self.messageView.markMessageAsSent(chat, messageId)
