@@ -20,7 +20,7 @@ Item {
     property string address: ""
     property bool resultClickable: true
 
-    property bool isAddedContact: pubKey != "" ? chatsModel.isAddedContact(pubKey) : false
+    property bool isAddedContact: pubKey != "" ? chatsModel.messageView.isAddedContact(pubKey) : false
 
     signal resultClicked(string pubKey)
     signal addToContactsButtonClicked(string pubKey)

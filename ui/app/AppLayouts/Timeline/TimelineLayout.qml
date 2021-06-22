@@ -82,7 +82,7 @@ ScrollView {
                 var msg = chatsModel.plainText(Emoji.deparse(statusUpdateInput.textInput.text))
                 if (msg.length > 0){
                     msg = statusUpdateInput.interpretMessage(msg)
-                    chatsModel.sendMessage(msg, "", Utils.isOnlyEmoji(msg) ? Constants.emojiType : Constants.messageType, true, "");
+                    chatsModel.messageView.sendMessage(msg, "", Utils.isOnlyEmoji(msg) ? Constants.emojiType : Constants.messageType, true, "");
                     statusUpdateInput.textInput.text = "";
                     if(event) event.accepted = true
                     sendMessageSound.stop()
@@ -96,7 +96,7 @@ ScrollView {
             anchors.top: statusUpdateInput.bottom
             anchors.topMargin: 40
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: chatsModel.messageList.rowCount() === 0
+            visible: chatsModel.messageView.messageList.rowCount() === 0
         }
 
         ListView {
@@ -121,7 +121,7 @@ ScrollView {
                 function(left, right) { return left.clock > right.clock }
             ]
 
-            model: chatsModel.messageList
+            model: chatsModel.messageView.messageList
 
             delegate: Message {
                 id: msgDelegate

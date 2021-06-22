@@ -17,7 +17,7 @@ PopupMenu {
         onTriggered: {
             chatsModel.requestMoreMessages(Constants.fetchRangeLast24Hours)
             timer.setTimeout(function(){
-                chatsModel.hideLoadingIndicator()
+                chatsModel.messageView.hideLoadingIndicator()
             }, 3000);
         }
     }
@@ -28,7 +28,7 @@ PopupMenu {
         onTriggered: {
             chatsModel.requestMoreMessages(Constants.fetchRangeLast2Days)
             timer.setTimeout(function(){
-                chatsModel.hideLoadingIndicator()
+                chatsModel.messageView.hideLoadingIndicator()
             }, 4000);
         }
       }
@@ -39,7 +39,7 @@ PopupMenu {
         onTriggered: {
             chatsModel.requestMoreMessages(Constants.fetchRangeLast3Days)
             timer.setTimeout(function(){
-                chatsModel.hideLoadingIndicator()
+                chatsModel.messageView.hideLoadingIndicator()
             }, 5000);
         }
     }
@@ -50,7 +50,7 @@ PopupMenu {
         onTriggered: {
             chatsModel.requestMoreMessages(Constants.fetchRangeLast7Days)
             timer.setTimeout(function(){
-                chatsModel.hideLoadingIndicator()
+                chatsModel.messageView.hideLoadingIndicator()
             }, 7000);
         }
     }

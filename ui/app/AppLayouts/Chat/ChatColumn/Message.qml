@@ -66,8 +66,8 @@ Item {
     property string authorCurrentMsg: "authorCurrentMsg"
     property string authorPrevMsg: "authorPrevMsg"
 
-    property string prevMsgTimestamp: chatsModel.messageList.getMessageData(prevMessageIndex, "timestamp")
-    property string nextMsgTimestamp: chatsModel.messageList.getMessageData(nextMessageIndex, "timestamp")
+    property string prevMsgTimestamp: chatsModel.messageView.messageList.getMessageData(prevMessageIndex, "timestamp")
+    property string nextMsgTimestamp: chatsModel.messageView.messageList.getMessageData(nextMessageIndex, "timestamp")
 
     property bool shouldRepeatHeader: ((parseInt(timestamp, 10) - parseInt(prevMsgTimestamp, 10)) / 60 / 1000) > Constants.repeatHeaderInterval
 
@@ -83,14 +83,14 @@ Item {
     property bool isExpired: (outgoingStatus === "sending" && (Math.floor(timestamp) + 180000) < Date.now())
     property bool isStatusUpdate: false
 
-    property int replyMessageIndex: chatsModel.messageList.getMessageIndex(responseTo);
-    property string repliedMessageAuthor: replyMessageIndex > -1 ? chatsModel.messageList.getMessageData(replyMessageIndex, "userName") : "";
-    property string repliedMessageAuthorPubkey: replyMessageIndex > -1 ? chatsModel.messageList.getMessageData(replyMessageIndex, "publicKey") : "";
+    property int replyMessageIndex: chatsModel.messageView.messageList.getMessageIndex(responseTo);
+    property string repliedMessageAuthor: replyMessageIndex > -1 ? chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "userName") : "";
+    property string repliedMessageAuthorPubkey: replyMessageIndex > -1 ? chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "publicKey") : "";
     property bool repliedMessageAuthorIsCurrentUser: replyMessageIndex > -1 ? repliedMessageAuthorPubkey === profileModel.profile.pubKey : "";
-    property string repliedMessageContent: replyMessageIndex > -1 ? chatsModel.messageList.getMessageData(replyMessageIndex, "message") : "";
-    property int repliedMessageType: replyMessageIndex > -1 ? parseInt(chatsModel.messageList.getMessageData(replyMessageIndex, "contentType")) : 0;
-    property string repliedMessageImage: replyMessageIndex > -1 ? chatsModel.messageList.getMessageData(replyMessageIndex, "image") : "";
-    property string repliedMessageUserIdenticon: replyMessageIndex > -1 ? chatsModel.messageList.getMessageData(replyMessageIndex, "identicon") : "";
+    property string repliedMessageContent: replyMessageIndex > -1 ? chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "message") : "";
+    property int repliedMessageType: replyMessageIndex > -1 ? parseInt(chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "contentType")) : 0;
+    property string repliedMessageImage: replyMessageIndex > -1 ? chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "image") : "";
+    property string repliedMessageUserIdenticon: replyMessageIndex > -1 ? chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "identicon") : "";
     property string repliedMessageUserImage: replyMessageIndex > -1 ? appMain.getProfileImage(repliedMessageAuthorPubkey, repliedMessageAuthorIsCurrentUser , false) || "" : "";
 
     property var imageClick: function () {}
@@ -256,7 +256,7 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     anchors.fill: parent
                     onClicked: {
-                        chatsModel.fillGaps(messageId)
+                        chatsModel.messageView.fillGaps(messageId)
                         root.visible = false;
                         root.height = 0;
                     }
@@ -323,7 +323,7 @@ Item {
                         fetchMoreButton.visible = false;
                         fetchDate.visible = false;
                         timer.setTimeout(function(){
-                            chatsModel.hideLoadingIndicator();
+                            chatsModel.messageView.hideLoadingIndicator();
                             fetchLoaderIndicator.active = false;
                             fetchMoreButton.visible = true;
                             fetchDate.visible = true;

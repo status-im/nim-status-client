@@ -143,11 +143,11 @@ PopupMenu {
                               qsTr("Pin")
         onTriggered: {
             if (pinnedMessage) {
-                chatsModel.unPinMessage(messageId, chatsModel.channelView.activeChannel.id)
+                chatsModel.messageView.unPinMessage(messageId, chatsModel.channelView.activeChannel.id)
                 return
             }
 
-            chatsModel.pinMessage(messageId, chatsModel.channelView.activeChannel.id)
+            chatsModel.messageView.pinMessage(messageId, chatsModel.channelView.activeChannel.id)
             messageContextMenu.close()
         }
         icon.source: "../../../img/pin"

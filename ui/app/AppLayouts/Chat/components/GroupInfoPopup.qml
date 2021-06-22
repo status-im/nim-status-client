@@ -212,7 +212,7 @@ ModalPopup {
         }
 
         StatusSettingsLineButton {
-            property int pinnedCount: chatsModel.pinnedMessagesList.count
+            property int pinnedCount: chatsModel.messageView.pinnedMessagesList.count
 
             id: pinnedMessagesBtn
             visible: pinnedCount > 0

@@ -55,7 +55,7 @@ ModalPopup {
 
         ListView {
             id: pinnedMessageListView
-            model: chatsModel.pinnedMessagesList
+            model: chatsModel.messageView.pinnedMessagesList
             height: parent.height
             anchors.left: parent.left
             anchors.leftMargin: -Style.current.padding

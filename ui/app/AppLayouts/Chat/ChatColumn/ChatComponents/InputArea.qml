@@ -11,7 +11,7 @@ Item {
     height: chatInput.height
 
     Connections {
-        target: chatsModel
+        target: chatsModel.messageView
         onLoadingMessagesChanged:
             if(value){
                 loadingMessagesIndicator.active = true
@@ -24,7 +24,7 @@ Item {
 
     Loader {
         id: loadingMessagesIndicator
-        active: chatsModel.loadingMessages
+        active: chatsModel.messageView.loadingMessages
         sourceComponent: loadingIndicator
         anchors.right: parent.right
         anchors.bottom: chatInput.top
@@ -81,7 +81,7 @@ Item {
             let msg = chatsModel.plainText(Emoji.deparse(chatInput.textInput.text))
             if (msg.length > 0){
                 msg = chatInput.interpretMessage(msg)
-                chatsModel.sendMessage(msg, chatInput.isReply ? SelectedMessage.messageId : "", Utils.isOnlyEmoji(msg) ? Constants.emojiType : Constants.messageType, false, JSON.stringify(suggestionsObj));
+                chatsModel.messageView.sendMessage(msg, chatInput.isReply ? SelectedMessage.messageId : "", Utils.isOnlyEmoji(msg) ? Constants.emojiType : Constants.messageType, false, JSON.stringify(suggestionsObj));
                 if(event) event.accepted = true
                 sendMessageSound.stop();
                 Qt.callLater(sendMessageSound.play);

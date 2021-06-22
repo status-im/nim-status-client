@@ -94,7 +94,7 @@ Item {
     Connections {
         target: chatsModel.channelView
         onActiveChannelChanged: {
-            chatsModel.hideLoadingIndicator()
+            chatsModel.messageView.hideLoadingIndicator()
             chatGroupsListView.currentIndex = chatsModel.channelView.activeChannelIndex
             SelectedMessage.reset();
             chatColumn.isReply = false;

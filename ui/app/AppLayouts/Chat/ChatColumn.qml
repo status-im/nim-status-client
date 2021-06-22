@@ -90,14 +90,14 @@ StackLayout {
     property var suggestionsObj: ([])
 
     function addSuggestionFromMessageList(i){
-        const contactAddr = chatsModel.messageList.getMessageData(i, "publicKey");
+        const contactAddr = chatsModel.messageView.messageList.getMessageData(i, "publicKey");
         if(idMap[contactAddr]) return;
         suggestionsObj.push({
-                                alias: chatsModel.messageList.getMessageData(i, "alias"),
-                                ensName: chatsModel.messageList.getMessageData(i, "ensName"),
+                                alias: chatsModel.messageView.messageList.getMessageData(i, "alias"),
+                                ensName: chatsModel.messageView.messageList.getMessageData(i, "ensName"),
                                 address: contactAddr,
-                                identicon: chatsModel.messageList.getMessageData(i, "identicon"),
-                                localNickname: chatsModel.messageList.getMessageData(i, "localName")
+                                identicon: chatsModel.messageView.messageList.getMessageData(i, "identicon"),
+                                localNickname: chatsModel.messageView.messageList.getMessageData(i, "localName")
                             })
         chatInput.suggestionsList.append(suggestionsObj[suggestionsObj.length - 1]);
         idMap[contactAddr] = true;
@@ -123,7 +123,7 @@ StackLayout {
             chatInput.suggestionsList.append(suggestionsObj[suggestionsObj.length - 1]);
             idMap[contactAddr] = true;
         }
-        const len2 = chatsModel.messageList.rowCount();
+        const len2 = chatsModel.messageView.messageList.rowCount();
         for (let f = 0; f < len2; f++) {
             addSuggestionFromMessageList(f);
         }
@@ -132,12 +132,12 @@ StackLayout {
     function showReplyArea() {
         isReply = true;
         isImage = false;
-        let replyMessageIndex = chatsModel.messageList.getMessageIndex(SelectedMessage.messageId);
+        let replyMessageIndex = chatsModel.messageView.messageList.getMessageIndex(SelectedMessage.messageId);
         if (replyMessageIndex === -1) return;
         
-        let userName = chatsModel.messageList.getMessageData(replyMessageIndex, "userName")
-        let message = chatsModel.messageList.getMessageData(replyMessageIndex, "message")
-        let identicon = chatsModel.messageList.getMessageData(replyMessageIndex, "identicon")
+        let userName = chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "userName")
+        let message = chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "message")
+        let identicon = chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "identicon")
 
         chatInput.showReplyArea(userName, message, identicon)
     }
@@ -165,7 +165,7 @@ StackLayout {
             isBlocked = profileModel.contacts.isContactBlocked(activeChatId);
         }
         onContactBlocked: {
-            chatsModel.removeMessagesByUserId(publicKey)
+            chatsModel.messageView.removeMessagesByUserId(publicKey)
         }
     }
 
@@ -260,7 +260,7 @@ StackLayout {
             Layout.fillHeight: true
             clip: true
             Repeater {
-                model: chatsModel
+                model: chatsModel.messageView
                 Loader {
                     active: false
                     sourceComponent: ChatMessages {
@@ -273,7 +273,7 @@ StackLayout {
             Connections {
                 target: chatsModel.channelView
                 onActiveChannelChanged: {
-                    stackLayoutChatMessages.currentIndex = chatsModel.getMessageListIndex(chatsModel.channelView.activeChannelIndex)
+                    stackLayoutChatMessages.currentIndex = chatsModel.messageView.getMessageListIndex(chatsModel.channelView.activeChannelIndex)
                     if(stackLayoutChatMessages.currentIndex > -1 && !stackLayoutChatMessages.children[stackLayoutChatMessages.currentIndex].active){
                         stackLayoutChatMessages.children[stackLayoutChatMessages.currentIndex].active = true;
                     }
@@ -295,7 +295,7 @@ StackLayout {
         }
 
         Connections {
-            target: chatsModel
+            target: chatsModel.messageView
             onMessagePushed: {
                 addSuggestionFromMessageList(messageIndex);
             }
@@ -321,9 +321,9 @@ StackLayout {
             Layout.preferredWidth: parent.width
             height: chatInput.height
             Layout.preferredHeight: height
-            
+
             Connections {
-                target: chatsModel
+                target: chatsModel.messageView
                 onLoadingMessagesChanged:
                     if(value){
                         loadingMessagesIndicator.active = true
@@ -336,7 +336,7 @@ StackLayout {
 
             Loader {
                 id: loadingMessagesIndicator
-                active: chatsModel.loadingMessages
+                active: chatsModel.messageView.loadingMessages
                 sourceComponent: loadingIndicator
                 anchors.right: parent.right
                 anchors.bottom: chatInput.top
@@ -396,7 +396,7 @@ StackLayout {
                     let msg = chatsModel.plainText(Emoji.deparse(chatInput.textInput.text))
                     if (msg.length > 0){
                         msg = chatInput.interpretMessage(msg)
-                        chatsModel.sendMessage(msg, chatInput.isReply ? SelectedMessage.messageId : "", Utils.isOnlyEmoji(msg) ? Constants.emojiType : Constants.messageType, false, JSON.stringify(suggestionsObj));
+                        chatsModel.messageView.sendMessage(msg, chatInput.isReply ? SelectedMessage.messageId : "", Utils.isOnlyEmoji(msg) ? Constants.emojiType : Constants.messageType, false, JSON.stringify(suggestionsObj));
                         if(event) event.accepted = true
                         sendMessageSound.stop();
                         Qt.callLater(sendMessageSound.play);

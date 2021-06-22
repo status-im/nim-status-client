@@ -46,7 +46,7 @@ Rectangle {
 
         Item {
             property int replyMessageIndex: chatsModel.getMessageIndex(chatId, responseTo)
-            property string repliedMessageContent: replyMessageIndex > -1 ? chatsModel.getMessageData(chatId, replyMessageIndex, "message") : "";
+            property string repliedMessageContent: replyMessageIndex > -1 ? chatsModel.messageView.getMessageData(chatId, replyMessageIndex, "message") : "";
 
 
             onReplyMessageIndexChanged: {

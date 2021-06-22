@@ -14,7 +14,7 @@ StyledText {
         cursorShape: Qt.PointingHandCursor
         anchors.fill: parent
         onClicked: {
-            chatsModel.resendMessage(chatId, messageId)
+            chatsModel.messageView.resendMessage(chatId, messageId)
         }
     }
 }

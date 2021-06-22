@@ -128,7 +128,7 @@ Loader {
                         id: stickerId
                         imageHeight: 56
                         imageWidth: 56
-                        stickerData: chatsModel.messageList.getMessageData(replyMessageIndex, "sticker")
+                        stickerData: chatsModel.messageView.messageList.getMessageData(replyMessageIndex, "sticker")
                         contentType: repliedMessageType
                         container: root.container
                     }

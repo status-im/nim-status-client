@@ -444,7 +444,7 @@ RowLayout {
                     checked: !chatsModel.communities.activeCommunity.active  && sLayout.currentIndex === Utils.getAppSectionIndex(Constants.chat)
 
                     Rectangle {
-                        property int badgeCount: chatsModel.unreadMessagesCount + profileModel.contacts.contactRequests.count
+                        property int badgeCount: chatsModel.messageView.unreadMessagesCount + profileModel.contacts.contactRequests.count
 
                         id: chatBadge
                         visible: chatBadge.badgeCount > 0
@@ -540,7 +540,7 @@ RowLayout {
             Layout.fillHeight: true
             // Loaders do not have access to the context, so props need to be set
             // Adding a "_" to avoid a binding loop
-            property var _chatsModel: chatsModel
+            property var _chatsModel: chatsModel.messageView
             property var _walletModel: walletModel
             property var _utilsModel: utilsModel
             property var _web3Provider: web3Provider

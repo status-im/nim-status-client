@@ -194,7 +194,7 @@ ModalPopup {
 
                     StyledText {
                         id: nbPinMessagesText
-                        text: chatsModel.pinnedMessagesList.count
+                        text: chatsModel.messageView.pinnedMessagesList.count
                         anchors.verticalCenter: parent.verticalCenter
                         padding: 0
                         font.pixelSize: 15

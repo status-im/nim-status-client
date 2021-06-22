@@ -52,7 +52,7 @@ StatusIconTabButton {
         height: 22
         Text {
             id: messageCount
-            font.pixelSize: chatsModel.unreadMessagesCount > 99 ? 10 : 12
+            font.pixelSize: chatsModel.messageView.unreadMessagesCount > 99 ? 10 : 12
             color: Style.current.white
             anchors.centerIn: parent
             text: unviewedMessagesCount > 99 ? "99+" : unviewedMessagesCount

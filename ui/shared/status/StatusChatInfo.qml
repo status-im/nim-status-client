@@ -151,7 +151,7 @@ Item {
             property bool hovered: false
 
             id: pinnedMessagesGroup
-            visible: chatType !== Constants.chatTypePublic && chatsModel.pinnedMessagesList.count > 0
+            visible: chatType !== Constants.chatTypePublic && chatsModel.messageView.pinnedMessagesList.count > 0
             width: childrenRect.width
             height: vertiSep.height
             anchors.left: chatInfo.right
@@ -184,7 +184,7 @@ Item {
             StyledText {
                 id: nbPinnedMessagesText
                 color: pinnedMessagesGroup.hovered ? Style.current.textColor : Style.current.secondaryText
-                text: chatsModel.pinnedMessagesList.count
+                text: chatsModel.messageView.pinnedMessagesList.count
                 font.pixelSize: 12
                 font.underline: pinnedMessagesGroup.hovered
                 anchors.left: pinImg.right
