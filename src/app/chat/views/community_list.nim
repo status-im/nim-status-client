@@ -173,6 +173,14 @@ QtObject:
       let channelIdx = community.chats.findIndexById(channel.id)
       if channelIdx > -1:
         community.chats[channelIdx] = channel
+ 
+  proc removeChannelInCommunity*(self: CommunityList, communityId: string, channelId: string) =
+    var community = self.getCommunityById(communityId)
+    let idx = community.chats.findIndexById(channelId)
+    if idx == -1: return
+    community.chats.delete(idx)
+    let index = self.communities.findIndexById(communityId)
+    self.communities[index] = community
 
   proc addCategoryToCommunity*(self: CommunityList, communityId: string, category: CommunityCategory) =
     var community = self.getCommunityById(communityId)

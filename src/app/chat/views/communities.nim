@@ -396,5 +396,12 @@ QtObject:
       for chat in community.chats:
         if (chat.id == channelId):
           return chat
-      
-    
+  
+  proc deleteCommunityChat*(self: CommunitiesView, communityId: string, channelId: string): string {.slot.} =
+    try:
+      self.status.chat.deleteCommunityChat(communityId, channelId)
+
+      self.joinedCommunityList.removeChannelInCommunity(communityId, channelId)
+    except RpcException as e:
+      error "Error deleting channel", msg=e.msg, channelId
+      result = StatusGoError(error: e.msg).toJson
