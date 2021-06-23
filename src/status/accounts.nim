@@ -68,6 +68,11 @@ proc changeNetwork*(self: AccountModel, fleetConfig: FleetConfig, network: strin
   let networkData = networks.getElems().find((n:JsonNode) => n["id"].getStr() == network)
 
   let updatedNodeConfig = status_accounts.getNodeConfig(fleetConfig, installationId, networkData)
+
+  updatedNodeConfig["KeyStoreDir"] = newJString("./keystore")
+  updatedNodeConfig["LogFile"] = newJString("./geth.log")
+  updatedNodeConfig["ShhextConfig"]["BackupDisabledDataDir"] = newJString("./")  
+
   statusGoResult = status_settings.saveSetting(Setting.NodeConfig, updatedNodeConfig)
   if statusGoResult.error != "":
     error "Error saving updated node config", msg=statusGoResult.error

@@ -36,8 +36,6 @@ proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, networkCon
   result["UpstreamConfig"]["URL"] = upstreamUrl
   result["ShhextConfig"]["InstallationID"] = newJString(installationId)
 
-
-  echo $result
   # TODO: commented since it's not necessary (we do the connections thru C bindings). Enable it thru an option once status-nodes are able to be configured in desktop
   # result["ListenAddr"] = if existsEnv("STATUS_PORT"): newJString("0.0.0.0:" & $getEnv("STATUS_PORT")) else: newJString("0.0.0.0:30305")
 

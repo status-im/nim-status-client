@@ -1,4 +1,4 @@
-import NimQml
+import NimQml, json
 import chronicles, strutils
 import ../../../status/libstatus/types as status_types
 import ../../../status/libstatus/settings as status_settings
