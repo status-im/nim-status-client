@@ -402,6 +402,9 @@ proc editCommunityChannel*(communityId: string, channelId: string, name: string,
   if rpcResult{"result"} != nil and rpcResult{"result"}.kind != JNull:
     result = rpcResult["result"]["chats"][0].toChat()
 
+proc deleteCommunityChat*(communityId: string, chatId: string) =
+  discard callPrivateRPC("deleteCommunityChat".prefix, %*[communityId, chatId.replace(communityId, "")])
+
 proc createCommunityCategory*(communityId: string, name: string, channels: seq[string]): CommunityCategory =
   let rpcResult = callPrivateRPC("createCommunityCategory".prefix, %*[
     {

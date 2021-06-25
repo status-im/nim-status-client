@@ -148,6 +148,11 @@ QtObject:
   QtProperty[bool] canPost:
     read = canPost
 
+  proc communityId*(self: ChatItemView): string {.slot.} = result = ?.self.chatItem.communityId
+
+  QtProperty[string] communityId:
+    read = communityId
+
   proc isMember*(self: ChatItemView): bool {.slot.} =
     if self.chatItem.isNil: return false
     let pubKey = self.status.settings.getSetting[:string](Setting.PublicKey, "0x0")

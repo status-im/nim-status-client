@@ -9,6 +9,8 @@ PopupMenu {
     property int channelIndex
     property var contextChannel: ({})
 
+    property bool communityActive: chatsModel.communities.activeCommunity.active
+
     id: channelContextMenu
     width: 175
     subMenuIcons: [
@@ -107,7 +109,7 @@ PopupMenu {
         onTriggered: chatsModel.channelView.clearChatHistoryByIndex(channelContextMenu.channelIndex)
     }
     Action {
-        enabled: chatsModel.communities.activeCommunity.active && chatsModel.communities.activeCommunity.admin
+        enabled: communityActive && chatsModel.communities.activeCommunity.admin
         text: qsTr("Edit Channel")
         icon.source: "../../../img/edit.svg"
         icon.width: 16
@@ -122,6 +124,9 @@ PopupMenu {
     Action {
         id: deleteAction
         text: {
+            if (communityActive) {
+                return qsTr("Delete Channel")
+            }
             if (channelContextMenu.contextChannel.chatType === Constants.chatTypeOneToOne) {
                 //% "Delete chat"
                 return qsTrId("delete-chat")
@@ -134,7 +139,7 @@ PopupMenu {
             return qsTrId("leave-chat")
         }
         icon.source: {
-            if (channelContextMenu.contextChannel.chatType === Constants.chatTypeOneToOne) {
+            if (channelContextMenu.contextChannel.chatType === Constants.chatTypeOneToOne || communityActive) {
                 return "../../../img/delete.svg"
             }
             return "../../../img/leave_chat.svg"
@@ -143,19 +148,24 @@ PopupMenu {
         icon.height: 16
         icon.color: Style.current.red
         onTriggered: openPopup(deleteChatConfirmationDialogComponent)
-        enabled: !chatsModel.communities.activeCommunity.active
+        enabled: !communityActive || chatsModel.communities.activeCommunity.admin
     }
 
     Component {
         id: deleteChatConfirmationDialogComponent
         ConfirmationDialog {
             btnType: "warn"
-            confirmationText: qsTr("Are you sure you want to leave this chat?")
+            confirmationText: communityActive ? qsTr("Are you sure you want to delete this channel?") :
+                                                                              qsTr("Are you sure you want to leave this chat?")
             onClosed: {
                 destroy()
             }
             onConfirmButtonClicked: {
-                chatsModel.channelView.leaveChatByIndex(channelContextMenu.channelIndex)
+                if (communityActive) {
+                    chatsModel.communities.deleteCommunityChat(contextChannel.communityId, contextChannel.id)
+                } else {
+                    chatsModel.channelView.leaveChatByIndex(channelContextMenu.channelIndex)
+                }
                 close();
             }
         }
