@@ -3,7 +3,9 @@ import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.13
 import "../../../imports"
 import "../../../shared"
+import "../Profile/Sections"
 import "."
+
 
 ColumnLayout {
     property bool hideSignPhraseModal: false
@@ -33,8 +35,26 @@ ColumnLayout {
         repeat: true
         onTriggered: walletModel.transactionsView.checkRecentHistory()
     }
+
+    Component {
+        id: backupSeedModalComponent
+        BackupSeedModal {
+            onClosed: {
+                destroy();
+            }
+        }
+    }
     
-    SeedPhraseBackupWarning { }
+    ModuleWarning {
+        visible: !profileModel.mnemonic.isBackedUp
+        color: Style.current.red
+              //% "Back up your seed phrase"
+        text: qsTrId("back-up-your-seed-phrase")
+        btnText: qsTr("Back up") 
+        onClick: function() {
+            openPopup(backupSeedModalComponent);
+        }
+    }
     
     SplitView {
         id: walletView

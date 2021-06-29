@@ -2,17 +2,20 @@ import QtQuick 2.13
 import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.13
 import QtGraphicalEffects 1.13
-import "../../../imports"
-import "../../../shared"
-import "../Profile/Sections"
+import "../imports"
 import "."
 
 Rectangle {
     id: root
-    visible: !profileModel.mnemonic.isBackedUp
     height: visible ? 32 : 0
     Layout.fillWidth: true
     color: Style.current.red
+
+    property string text: ""
+    property string btnText: ""
+    property int btnWidth: 58
+    
+    property var onClick: function() {}
 
     Row {
         spacing: Style.current.halfPadding
@@ -20,20 +23,19 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
 
         StyledText {
-            //% "Back up your seed phrase"
-            text: qsTrId("back-up-your-seed-phrase")
+            text: root.text
             font.pixelSize: 13
             anchors.verticalCenter: parent.verticalCenter
             color: Style.current.white
         }
 
         Button {
-            width: 58
+            width: btnWidth
             height: 24
             contentItem: Item {
                 anchors.fill: parent
                 Text {
-                    text: "Back up"
+                    text: btnText
                     font.pixelSize: 13
                     font.weight: Font.Medium
                     font.family: Style.current.fontRegular.name
@@ -55,7 +57,7 @@ Rectangle {
             MouseArea {
                 cursorShape: Qt.PointingHandCursor
                 anchors.fill: parent
-                onClicked: backupSeedModal.open()
+                onClicked: root.onClick()
             }
         }
     }
@@ -66,7 +68,7 @@ Rectangle {
         anchors.topMargin: 6
         anchors.right: parent.right
         anchors.rightMargin: 18
-        source: "../../img/close-white.svg"
+        source: "img/close-white.svg"
         height: 20
         width: 20
     }
@@ -84,10 +86,4 @@ Rectangle {
             PropertyAnimation { target: root; property: "y"; to: -1 * root.height }
         }
     }
-
-
-    BackupSeedModal {
-        id: backupSeedModal
-    }
-
 }

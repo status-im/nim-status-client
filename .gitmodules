@@ -103,3 +103,9 @@
 [submodule "ui/StatusQ"]
 	path = ui/StatusQ
 	url = https://github.com/status-im/StatusQ
+[submodule "vendor/semver.nim"]
+	path = vendor/semver.nim
+	url = https://github.com/euantorano/semver.nim
+[submodule "vendor/nim-configparser"]
+	path = vendor/nim-configparser
+	url = https://github.com/xmonader/nim-configparser

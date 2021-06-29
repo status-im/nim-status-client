@@ -10,11 +10,11 @@ import nbaser
 import stew/byteutils
 from base32 import nil
 
-const HTTPS_SCHEME = "https"
-const IPFS_GATEWAY =  ".infura.status.im"
-const SWARM_GATEWAY = "swarm-gateways.net"
+const HTTPS_SCHEME* = "https"
+const IPFS_GATEWAY* =  ".infura.status.im"
+const SWARM_GATEWAY* = "swarm-gateways.net"
 
-const base58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+const base58* = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 logScope:
   topics = "provider-model"

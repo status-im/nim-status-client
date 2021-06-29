@@ -24,4 +24,4 @@ proc delete*(self: UtilsController) =
   delete self.view
 
 proc init*(self: UtilsController) =
-  discard
+  self.view.asyncCheckForUpdates()

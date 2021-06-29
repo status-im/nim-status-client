@@ -17,6 +17,8 @@ RowLayout {
     id: appMain
     property int currentView: sLayout.currentIndex
     property bool popupOpened: false
+    property var newVersionJSON: JSON.parse(utilsModel.newVersion)
+
     spacing: 0
     Layout.fillHeight: true
     Layout.fillWidth: true
@@ -490,93 +492,121 @@ RowLayout {
         }
     }
 
-    StackLayout {
-        id: sLayout
-        Layout.fillWidth: true
-        Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-        Layout.fillHeight: true
-        currentIndex: 0
-        onCurrentIndexChanged: {
-            if (typeof this.children[currentIndex].onActivated === "function") {
-                this.children[currentIndex].onActivated()
-            }
-
-            if(this.children[currentIndex] === browserLayoutContainer && browserLayoutContainer.active == false){
-                browserLayoutContainer.active = true;
-            }
-
-            timelineLayoutContainer.active = this.children[currentIndex] === timelineLayoutContainer
-
-            if(this.children[currentIndex] === walletLayoutContainer){
-                walletLayoutContainer.showSigningPhrasePopup();
+    Component {
+        id: downloadModalComponent
+        DownloadModal {
+            onClosed: {
+                destroy();
             }
         }
+    }
 
-        ChatLayout {
-            id: chatLayoutContainer
+    ColumnLayout {
+        spacing: 0
+
+        ModuleWarning {
+            id: updateWarning
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            Layout.fillHeight: true
-        }
-
-        WalletLayout {
-            id: walletLayoutContainer
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            Layout.fillHeight: true
-        }
-
-        Component {
-            id: browserLayoutComponent
-            BrowserLayout { }
-        }
-
-        Loader {
-            id: browserLayoutContainer
-            sourceComponent: browserLayoutComponent
-            active: false
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            Layout.fillHeight: true
-            // Loaders do not have access to the context, so props need to be set
-            // Adding a "_" to avoid a binding loop
-            property var _chatsModel: chatsModel.messageView
-            property var _walletModel: walletModel
-            property var _utilsModel: utilsModel
-            property var _web3Provider: web3Provider
-        }
-
-        Loader {
-            id: timelineLayoutContainer
-            sourceComponent: Component {
-                TimelineLayout {}
+            Layout.preferredHeight: 32
+            visible: newVersionJSON.available
+            color: Style.current.green
+            btnWidth: 100
+            text: qsTr("A new  version of Status (%1) is available").arg(newVersionJSON.version)
+            btnText: qsTr("Download") 
+            onClick: function(){
+                openPopup(downloadModalComponent, {newVersionAvailable: newVersionJSON.available, downloadURL: newVersionJSON.url})
             }
-            onLoaded: timelineLayoutContainer.item.onActivated()
-            active: false
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            Layout.fillHeight: true
         }
 
-        ProfileLayout {
-            id: profileLayoutContainer
+        StackLayout {
+            id: sLayout
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             Layout.fillHeight: true
+            currentIndex: 0
+            onCurrentIndexChanged: {
+                if (typeof this.children[currentIndex].onActivated === "function") {
+                    this.children[currentIndex].onActivated()
+                }
+
+                if(this.children[currentIndex] === browserLayoutContainer && browserLayoutContainer.active == false){
+                    browserLayoutContainer.active = true;
+                }
+
+                timelineLayoutContainer.active = this.children[currentIndex] === timelineLayoutContainer
+
+                if(this.children[currentIndex] === walletLayoutContainer){
+                    walletLayoutContainer.showSigningPhrasePopup();
+                }
+            }
+
+            ChatLayout {
+                id: chatLayoutContainer
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.fillHeight: true
+            }
+
+            WalletLayout {
+                id: walletLayoutContainer
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.fillHeight: true
+            }
+
+            Component {
+                id: browserLayoutComponent
+                BrowserLayout { }
+            }
+
+            Loader {
+                id: browserLayoutContainer
+                sourceComponent: browserLayoutComponent
+                active: false
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.fillHeight: true
+                // Loaders do not have access to the context, so props need to be set
+                // Adding a "_" to avoid a binding loop
+                property var _chatsModel: chatsModel
+                property var _walletModel: walletModel
+                property var _utilsModel: utilsModel
+                property var _web3Provider: web3Provider
+            }
+
+            Loader {
+                id: timelineLayoutContainer
+                sourceComponent: Component {
+                    TimelineLayout {}
+                }
+                onLoaded: timelineLayoutContainer.item.onActivated()
+                active: false
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.fillHeight: true
+            }
+
+            ProfileLayout {
+                id: profileLayoutContainer
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.fillHeight: true
+            }
+
+            NodeLayout {
+                id: nodeLayoutContainer
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.fillHeight: true
+            }
+
+            UIComponents {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.fillHeight: true
+            }
         }
 
-        NodeLayout {
-            id: nodeLayoutContainer
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            Layout.fillHeight: true
-        }
-
-        UIComponents {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            Layout.fillHeight: true
-        }
     }
 }
 
