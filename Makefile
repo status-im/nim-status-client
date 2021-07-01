@@ -396,7 +396,9 @@ endif
 	echo -e $(BUILD_MSG) "zip"
 	mkdir -p pkg
 	cd $(OUTPUT) && \
-	7z a ../../../../$(STATUS_CLIENT_ZIP) *
+	#7z a ../../../../$(STATUS_CLIENT_ZIP) *
+	iscc status.iss
+
 
 pkg: $(PKG_TARGET)
 
