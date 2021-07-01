@@ -26,7 +26,7 @@ pipeline {
   environment {
     TARGET = 'windows'
     /* Improve make performance */
-    MAKEFLAGS = '-j4'
+    MAKEFLAGS = '-j4 V=1'
     /* Disable colors in Nim compiler logs */
     NIMFLAGS = '--colors:off'
     /* Control output the filename */
