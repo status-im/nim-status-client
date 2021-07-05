@@ -389,6 +389,7 @@ $(STATUS_CLIENT_ZIP): nim_status_client nim_windows_launcher $(NIM_WINDOWS_PREBU
 	windeployqt --compiler-runtime --qmldir ui --release \
 		tmp/windows/dist/Status/bin/DOtherSide.dll
 	mv tmp/windows/dist/Status/bin/vc_redist.x64.exe tmp/windows/dist/Status/vendor/
+	cp status.iss $(OUTPUT)/status.iss
 # if WINDOWS_CODESIGN_PFX_PATH is not set then DLLs, EXEs are not signed
 ifdef WINDOWS_CODESIGN_PFX_PATH
 	scripts/sign-windows-bin.sh ./tmp/windows/dist/Status
@@ -396,7 +397,6 @@ endif
 	echo -e $(BUILD_MSG) "zip"
 	mkdir -p pkg
 	cd $(OUTPUT) && \
-	#7z a ../../../../$(STATUS_CLIENT_ZIP) *
 	iscc status.iss
 
 
