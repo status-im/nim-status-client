@@ -131,6 +131,8 @@ ModalPopup {
                 getGasEthValue: walletModel.gasView.getGasEthValue
                 getFiatValue: walletModel.balanceView.getFiatValue
                 defaultCurrency: walletModel.balanceView.defaultCurrency
+                maxPriorityFeePerGas: walletModel.gasView.maxPriorityFeePerGas
+                
                 width: stack.width
                 property var estimateGas: Backpressure.debounce(gasSelector, 600, function() {
                     if (!(selectFromAccount.selectedAccount && selectFromAccount.selectedAccount.address &&
@@ -221,6 +223,14 @@ ModalPopup {
                 stack.back()
             }
         }
+
+        Component {
+            id: transactionSettingsConfirmationPopupComponent
+            TransactionSettingsConfirmationPopup {
+                
+            }
+        }
+
         StatusButton {
             id: btnNext
             anchors.right: parent.right
@@ -234,6 +244,18 @@ ModalPopup {
                     if (stack.isLastGroup) {
                         return root.sendTransaction()
                     }
+
+                    if(gasSelector.eip1599Enabled && stack.currentGroup === group2 && gasSelector.advancedMode){
+                        if(gasSelector.showPriceLimitWarning || gasSelector.showTipLimitWarning){
+                            openPopup(transactionSettingsConfirmationPopupComponent, {
+                                onConfirm: function(){
+                                    stack.next();
+                                }
+                            })
+                            return
+                        }
+                    }
+
                     stack.next()
                 }
             }

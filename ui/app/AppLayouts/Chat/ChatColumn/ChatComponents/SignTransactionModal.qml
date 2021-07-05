@@ -137,6 +137,7 @@ ModalPopup {
                 getGasEthValue: walletModel.gasView.getGasEthValue
                 getFiatValue: walletModel.balanceView.getFiatValue
                 defaultCurrency: walletModel.balanceView.defaultCurrency
+                maxPriorityFeePerGas: walletModel.gasView.maxPriorityFeePerGas
                 width: stack.width
     
                 property var estimateGas: Backpressure.debounce(gasSelector, 600, function() {
@@ -283,6 +284,16 @@ ModalPopup {
                                                     gasSelector.selectedGasPrice,
                                                     transactionSigner.enteredPassword)
                     }
+
+                    if(gasSelector.eip1599Enabled){
+                        console.log("EIP1559 enabled")
+                        if(gasSelector.showPriceLimitWarning || gasSelector.showTipLimitWarning){
+                            console.log("SHOW POPUP")
+                            // return
+                        }
+                    }
+
+
                     if (typeof stack.currentGroup.onNextClicked === "function") {
                         return stack.currentGroup.onNextClicked()
                     }

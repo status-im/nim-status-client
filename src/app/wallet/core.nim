@@ -56,6 +56,7 @@ proc init*(self: WalletController) =
         for acc in data.accounts:
           self.status.wallet.updateAccount(acc)
           self.status.wallet.checkPendingTransactions(acc, data.blockNumber)
+          discard self.status.wallet.isEIP1559Enabled(data.blockNumber)
           self.view.updateView()
 
           # TODO: show notification
@@ -81,5 +82,8 @@ proc init*(self: WalletController) =
     let tx = TransactionMinedArgs(e)
     self.view.transactionCompleted(tx.success, tx.transactionHash, tx.revertReason)
 
-proc checkPendingTransactions*(self: WalletController) =
-  self.status.wallet.checkPendingTransactions() # TODO: consider doing this in a threadpool task
+proc onLogin*(self: WalletController) =
+  let blockNumber = getLatestBlock()
+  self.status.wallet.checkPendingTransactions(blockNumber) # TODO: consider doing this in a threadpool task
+  discard self.status.wallet.isEIP1559Enabled(blockNumber)
+ 

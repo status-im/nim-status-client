@@ -37,6 +37,7 @@ type WalletModel* = ref object
   defaultCurrency*: string
   tokens*: seq[Erc20Contract]
   totalBalance*: float
+  eip1559Enabled*: bool
 
 proc getDefaultCurrency*(self: WalletModel): string
 proc calculateTotalFiatBalance*(self: WalletModel)
@@ -48,6 +49,7 @@ proc newWalletModel*(events: EventEmitter): WalletModel =
   result.events = events
   result.defaultCurrency = ""
   result.totalBalance = 0.0
+  result.eip1559Enabled = false
 
 proc initEvents*(self: WalletModel) =
   self.events.on("currencyChanged") do(e: Args):
@@ -98,15 +100,17 @@ proc confirmTransactionStatus(self: WalletModel, pendingTransactions: JsonNode, 
                )
       self.events.emit(parseEnum[PendingTransactionType](trx["type"].getStr).confirmed, ev)
 
-proc checkPendingTransactions*(self: WalletModel) =
+proc getLatestBlock*(): int = 
   let response = getBlockByNumber("latest").parseJson()
   if response.hasKey("result"):
-    let latestBlock = parseInt($fromHex(Stuint[256], response["result"]["number"].getStr))
-    let pendingTransactions = status_wallet.getPendingTransactions()
-    if (pendingTransactions != ""):
-      self.confirmTransactionStatus(pendingTransactions.parseJson{"result"}, latestBlock)
-    
+    return parseInt($fromHex(Stuint[256], response["result"]["number"].getStr))
+  return 0
 
+proc checkPendingTransactions*(self: WalletModel, blockNumber: int) =
+  let pendingTransactions = status_wallet.getPendingTransactions()
+  if (pendingTransactions != ""):
+    self.confirmTransactionStatus(pendingTransactions.parseJson{"result"}, blockNumber)
+    
 proc checkPendingTransactions*(self: WalletModel, address: string, blockNumber: int) =
   self.confirmTransactionStatus(status_wallet.getPendingOutboundTransactionsByAddress(address).parseJson["result"], blockNumber)
   
@@ -208,6 +212,14 @@ proc newAccount*(self: WalletModel, walletType: string, derivationPath: string, 
   var account = WalletAccount(name: name, path: derivationPath, walletType: walletType, address: address, iconColor: iconColor, balance: none[string](), assetList: assets, realFiatBalance: none[float](), publicKey: publicKey)
   updateBalance(account, self.getDefaultCurrency())
   account
+
+proc maxPriorityFeePerGas*(self: WalletModel):string =
+  let response = status_wallet.maxPriorityFeePerGas().parseJson()
+  if response.hasKey("result"):
+    return $fromHex(Stuint[256], response["result"].getStr)
+  else:
+    error "Error obtaining max priority fee per gas", error=response
+    raise newException(StatusGoException, "Error obtaining max priority fee per gas")    
 
 proc initAccounts*(self: WalletModel) =
   self.tokens = status_tokens.getVisibleTokens()
@@ -389,3 +401,20 @@ proc watchTransaction*(transactionHash: string): string =
 
 proc hex2Token*(self: WalletModel, input: string, decimals: int): string =
   result = status_wallet.hex2Token(input, decimals)
+
+proc isEIP1559Enabled*(self: WalletModel, blockNumber: int):bool =
+  let networkId = status_settings.getCurrentNetworkDetails().config.networkId
+  let activationBlock = case status_settings.getCurrentNetworkDetails().config.networkId:
+    of 3: 10499401 # Ropsten
+    of 4: 8897988 # Rinkeby
+    of 5: 5062605 # Goerli
+    # TODO: add mainnet
+    else: -1
+  if activationBlock > -1 and blockNumber >= activationBlock:
+    result = true
+  else:
+    result = false
+  self.eip1559Enabled = result
+
+proc isEIP1559Enabled*(self: WalletModel): bool =
+  result = self.eip1559Enabled
