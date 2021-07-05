@@ -368,7 +368,7 @@ $(NIM_WINDOWS_PREBUILT_DLLS):
 nim_windows_launcher: | deps
 	$(ENV_SCRIPT) nim c -d:debug --outdir:./bin --passL:"-static-libgcc -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive" src/nim_windows_launcher.nim
 
-STATUS_CLIENT_ZIP ?= pkg/Status.zip
+STATUS_CLIENT_ZIP ?= Status
 
 $(STATUS_CLIENT_ZIP): override RESOURCES_LAYOUT := -d:production
 $(STATUS_CLIENT_ZIP): OUTPUT := tmp/windows/dist/Status
@@ -397,7 +397,7 @@ endif
 	echo -e $(BUILD_MSG) "zip"
 	mkdir -p pkg
 	cd $(OUTPUT) && \
-	iscc status.iss
+	ISCC -D"OUTPUTDIR=../../../../pkg" -D"BaseName=${STATUS_CLIENT_ZIP}" status.iss
 
 
 pkg: $(PKG_TARGET)

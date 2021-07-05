@@ -63,7 +63,9 @@ export VCINSTALLDIR="/c/BuildTools/VC"
 
 You might also have to include the following paths in your `$PATH:
 
-export PATH=`"/c/BuildTools/MSBuild/Current/Bin:/c/BuildTools/VC/Tools/MSVC/14.27.29110/bin:`$PATH`"
+export PATH=`"/c/BuildTools/MSBuild/Current/Bin:`$PATH`"
+export PATH=`"/c/BuildTools/VC/Tools/MSVC/14.27.29110/bin:`$PATH`"
+export PATH=`"/c/ProgramData/scoop/apps/inno-setup/current:`$PATH`"
 "@
 }
 

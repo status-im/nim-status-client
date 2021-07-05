@@ -30,7 +30,8 @@ pipeline {
     /* Disable colors in Nim compiler logs */
     NIMFLAGS = '--colors:off'
     /* Control output the filename */
-    STATUS_CLIENT_ZIP = "pkg/${utils.pkgFilename('zip')}"
+    STATUS_CLIENT_ZIP = "${utils.pkgFilename('')}"
+    STATUS_CLIENT_ZIP_PATH = "pkg/${utils.pkgFilename('exe')}"
     /* RFC 3161 timestamping URL for DigiCert */
     WINDOWS_CODESIGN_TIMESTAMP_URL = 'http://timestamp.digicert.com'
   }
@@ -65,13 +66,13 @@ pipeline {
       parallel {
         stage('Upload') {
           steps { script {
-            env.PKG_URL = s3.uploadArtifact(env.STATUS_CLIENT_ZIP)
+            env.PKG_URL = s3.uploadArtifact(env.STATUS_CLIENT_ZIP_PATH)
             jenkins.setBuildDesc(Zip: env.PKG_URL)
           } }
         }
         stage('Archive') {
           steps { script {
-            archiveArtifacts(env.STATUS_CLIENT_ZIP)
+            archiveArtifacts(env.STATUS_CLIENT_ZIP_PATH)
           } }
         }
       }
