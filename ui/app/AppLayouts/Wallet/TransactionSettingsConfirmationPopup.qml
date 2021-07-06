@@ -14,6 +14,14 @@ ModalPopup {
 
     property var onConfirm: function(){}
 
+    property double currentBaseFee: 0
+    property double currentMinimumTip: 0
+    property double currentAverageTip: 0
+    property double tipLimit: 0
+    property double suggestedTipLimit: 0
+    property double priceLimit: 0
+    property double suggestedPriceLimit: 0
+
     Column {
         id: content
         width: 450
@@ -43,7 +51,7 @@ ModalPopup {
             }
 
             StyledText {
-                text: qsTr("%1 Gwei").arg("TODO")
+                text: qsTr("%1 Gwei").arg(currentBaseFee)
                 font.pixelSize: 13
                 width: 190
                 anchors.right: parent.right
@@ -64,7 +72,7 @@ ModalPopup {
             }
 
             StyledText {
-                text: qsTr("%1 Gwei").arg("TODO")
+                text: qsTr("%1 Gwei").arg(currentMinimumTip)
                 font.pixelSize: 13
                 width: 190
                 anchors.right: parent.right
@@ -85,7 +93,7 @@ ModalPopup {
             }
 
             StyledText {
-                text: qsTr("%1 Gwei").arg("TODO")
+                text: qsTr("%1 Gwei").arg(currentAverageTip)
                 font.pixelSize: 13
                 width: 190
                 anchors.right: parent.right
@@ -121,7 +129,7 @@ ModalPopup {
                     }
 
                     StyledText {
-                        text: qsTr("%1 Gwei").arg("TODO")
+                        text: qsTr("%1 Gwei").arg(tipLimit)
                         font.pixelSize: 13
                         width: 190
                         anchors.right: parent.right
@@ -142,7 +150,7 @@ ModalPopup {
                     }
 
                     StyledText {
-                        text: qsTr("%1 Gwei").arg("TODO")
+                        text: qsTr("%1 Gwei").arg(suggestedTipLimit)
                         font.pixelSize: 13
                         width: 190
                         anchors.right: parent.right
@@ -181,7 +189,7 @@ ModalPopup {
                     }
 
                     StyledText {
-                        text: qsTr("%1 Gwei").arg("TODO")
+                        text: qsTr("%1 Gwei").arg(priceLimit)
                         font.pixelSize: 13
                         width: 190
                         anchors.right: parent.right
@@ -202,7 +210,7 @@ ModalPopup {
                     }
 
                     StyledText {
-                        text: qsTr("%1 Gwei").arg("TODO")
+                        text: qsTr("%1 Gwei").arg(suggestedPriceLimit)
                         font.pixelSize: 13
                         width: 190
                         anchors.right: parent.right

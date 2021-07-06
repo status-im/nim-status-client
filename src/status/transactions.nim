@@ -8,7 +8,7 @@ import
   types
 from utils as status_utils import toUInt64, gwei2Wei, parseAddress
 
-proc buildTransaction*(source: Address, value: Uint256, gas = "", gasPrice = "", data = ""): EthSend =
+proc buildTransaction*(source: Address, value: Uint256, gas = "", gasPrice = "", isEIP1559Enabled = false, maxPriorityFeePerGas = "", maxFeePerGas = "", data = ""): EthSend =
   result = EthSend(
     source: source,
     value: value.some,
@@ -17,6 +17,6 @@ proc buildTransaction*(source: Address, value: Uint256, gas = "", gasPrice = "",
     data: data
   )
 
-proc buildTokenTransaction*(source, contractAddress: Address, gas = "", gasPrice = ""): EthSend =
-  result = buildTransaction(source, 0.u256, gas, gasPrice)
+proc buildTokenTransaction*(source, contractAddress: Address, gas = "", gasPrice = "", isEIP1559Enabled = false, maxPriorityFeePerGas = "", maxFeePerGas = ""): EthSend =
+  result = buildTransaction(source, 0.u256, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
   result.to = contractAddress.some

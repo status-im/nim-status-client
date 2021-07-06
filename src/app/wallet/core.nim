@@ -57,6 +57,7 @@ proc init*(self: WalletController) =
           self.status.wallet.updateAccount(acc)
           self.status.wallet.checkPendingTransactions(acc, data.blockNumber)
           discard self.status.wallet.isEIP1559Enabled(data.blockNumber)
+          self.status.wallet.setLatestBaseFee(data.baseFeePerGas)
           self.view.updateView()
 
           # TODO: show notification
@@ -83,7 +84,8 @@ proc init*(self: WalletController) =
     self.view.transactionCompleted(tx.success, tx.transactionHash, tx.revertReason)
 
 proc onLogin*(self: WalletController) =
-  let blockNumber = getLatestBlock()
-  self.status.wallet.checkPendingTransactions(blockNumber) # TODO: consider doing this in a threadpool task
-  discard self.status.wallet.isEIP1559Enabled(blockNumber)
+  let blockInfo = getLatestBlock()
+  self.status.wallet.checkPendingTransactions(blockInfo[0]) # TODO: consider doing this in a threadpool task
+  discard self.status.wallet.isEIP1559Enabled(blockInfo[0])
+  self.status.wallet.setLatestBaseFee(blockInfo[1])
  

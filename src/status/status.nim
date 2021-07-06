@@ -48,7 +48,7 @@ proc newStatusInstance*(fleetConfig: string): Status =
   result.mailservers = mailservers.newMailserversModel(result.events)
   result.browser = browser.newBrowserModel(result.events)
   result.tokens = tokens.newTokensModel(result.events)
-  result.provider = provider.newProviderModel(result.events, result.permissions)
+  result.provider = provider.newProviderModel(result.events, result.permissions, result.wallet)
 
 proc initNode*(self: Status) =
   self.tasks.init()

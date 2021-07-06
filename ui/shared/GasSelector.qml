@@ -15,13 +15,21 @@ Item {
     property double fastestGasPrice: 100
 
     property string maxPriorityFeePerGas: "0"
-    property bool eip1599Enabled: walletModel.isEIP1559Enabled
+    property bool eip1599Enabled: walletModel.transactionsView.isEIP1559Enabled
+    property double latestBaseFee: (eip1599Enabled ? parseFloat(walletModel.transactionsView.latestBaseFee) : 0)
 
     property var getGasEthValue: function () {}
     property var getFiatValue: function () {}
     property string defaultCurrency: "USD"
     property alias selectedGasPrice: inputGasPrice.text
     property alias selectedGasLimit: inputGasLimit.text
+
+
+    property alias selectedTipLimit: inputPerGasTipLimit.text
+    property alias selectedOverallLimit: inputGasPrice.text
+  
+
+
     property double selectedGasEthValue
     property double selectedGasFiatValue
     //% "Must be greater than 0"
@@ -35,13 +43,15 @@ Item {
 
     property bool advancedMode: false
 
+    property double perGasTipLimitFloor: 1 // Matches status-react minimum-priority-fee
+    property double perGasTipLimitAverage: 1.5 // Matches status-react average-priority-fee
+
     // TODO: determine how to calculate this? ask @roman
     property double eip1559LowPrice: 1
     property double eip1559OptimalPrice: 5
     property double eip1559HighPrice: 9
-    property double perGasTipLimitFloor: 10
-    property double perGasTipLimitAverage: 20
-    property double perGasOverallLimitBase: 30
+
+    // TODO: determine how to calculate this? ask @roman
     property double perGasOverallLimitFloor: 40
     property double perGasOverallLimitAverage: 50
 
@@ -91,8 +101,8 @@ Item {
         }
 
         // Per-gas overall limit rules
-        if(inputOverallLimit < perGasOverallLimitBase){
-            errorMsg = appendError(errorMsg, qsTr("The limit is below the current base fee of %1 gwei").arg(perGasOverallLimitBase))
+        if(inputOverallLimit < latestBaseFee){
+            errorMsg = appendError(errorMsg, qsTr("The limit is below the current base fee of %1 gwei").arg(latestBaseFee))
             showPriceLimitWarning = true
         } else if(inputOverallLimit < perGasOverallLimitFloor){
             errorMsg = appendError(errorMsg, qsTr("The limit should be at least %1 Gwei above the base fee").arg(perGasOverallLimitFloor))
@@ -181,7 +191,7 @@ Item {
         anchors.top: parent.top
         anchors.left: prioritytext.right
         anchors.leftMargin: Style.current.smallPadding
-        text: qsTr("Current base fee: %1 Gwei").arg("TODO")
+        text: qsTr("Current base fee: %1 Gwei").arg(latestBaseFee)
         font.weight: Font.Medium
         font.pixelSize: 13
         color: Style.current.secondaryText

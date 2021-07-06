@@ -89,17 +89,8 @@ QtObject:
   QtProperty[QVariant] dappBrowserView:
     read = getDappBrowserView
 
-  proc triggerEIP1559Check(self: WalletView) {.signal.}
-
-  proc isEIP1559Enabled(self: WalletView): bool {.slot.} =
-    return self.status.wallet.isEIP1559Enabled()
-
-  QtProperty[bool] isEIP1559Enabled:
-    read = isEIP1559Enabled
-    notify = triggerEIP1559Check
-
   proc updateView*(self: WalletView) =
-    self.triggerEIP1559Check()
+    self.transactionsView.triggerEIP1559Check()
 
     self.balanceView.setTotalFiatBalance(self.status.wallet.getTotalFiatBalance())
     self.balanceView.totalFiatBalanceChanged()

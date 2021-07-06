@@ -18,6 +18,7 @@ type WalletSignal* = ref object of Signal
   eventType*: string
   blockNumber*: int
   accounts*: seq[string]
+  baseFeePerGas*: string
   # newTransactions*: ???
   erc20*: bool
 
