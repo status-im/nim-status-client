@@ -1,5 +1,5 @@
 import
-  json, options, strutils
+  json, options, strutils, ../types
 
 import
   web3/[conversions, ethtypes], stint
@@ -12,16 +12,20 @@ template stripLeadingZeros*(value: string): string =
     cidx.inc
   value[cidx .. ^1]
 
-# TODO: update this in nim-web3
-proc `%`*(x: EthSend): JsonNode =
+proc `%`*(x: TransactionData): JsonNode =
   result = newJobject()
   result["from"] = %x.source
+  result["type"] = %x.txType
   if x.to.isSome:
     result["to"] = %x.to.unsafeGet
   if x.gas.isSome:
     result["gas"] = %x.gas.unsafeGet
   if x.gasPrice.isSome:
     result["gasPrice"] = %("0x" & x.gasPrice.unsafeGet.toHex.stripLeadingZeros)
+  if x.maxFeePerGas.isSome:
+    result["maxFeePerGas"] = %x.maxFeePerGas.unsafeGet
+  if x.maxPriorityFeePerGas.isSome:
+    result["maxPriorityFeePerGas"] = %x.maxPriorityFeePerGas.unsafeGet
   if x.value.isSome:
     result["value"] = %("0x" & x.value.unsafeGet.toHex)
   result["data"] = %x.data

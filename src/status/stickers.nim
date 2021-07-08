@@ -42,7 +42,7 @@ proc init*(self: StickersModel) =
     var evArgs = StickerArgs(e)
     self.addStickerToRecent(evArgs.sticker, evArgs.save)
 
-proc buildTransaction(packId: Uint256, address: Address, price: Uint256, approveAndCall: var ApproveAndCall[100], sntContract: var Erc20Contract, gas = "", gasPrice = ""): EthSend =
+proc buildTransaction(packId: Uint256, address: Address, price: Uint256, approveAndCall: var ApproveAndCall[100], sntContract: var Erc20Contract, gas = "", gasPrice = ""): TransactionData =
   sntContract = status_contracts.getSntContract()
   let
     stickerMktContract = status_contracts.getContract("sticker-market")

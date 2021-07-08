@@ -147,8 +147,11 @@ proc validateTransactionInput*(from_addr, to_addr, assetAddress, value, gas, gas
   if parseFloat(value) < 0: raise newException(ValueError, "value should be a number >= 0")
   if parseInt(gas) <= 0: raise newException(ValueError, "gas should be a number > 0")
   if isEIP1599Enabled:
-    if parseFloat(maxPriorityFeePerGas) <= 0: raise newException(ValueError, "maxPriorityFeePerGas should be a number > 0")
-    if parseFloat(maxFeePerGas) <= 0: raise newException(ValueError, "maxFeePerGas should be a number > 0")
+    if gasPrice != "" and (maxPriorityFeePerGas != "" or maxFeePerGas != ""): 
+      raise newException(ValueError, "gasPrice can't be used with maxPriorityFeePerGas and maxFeePerGas")
+    if gasPrice == "": 
+      if parseFloat(maxPriorityFeePerGas) <= 0: raise newException(ValueError, "maxPriorityFeePerGas should be a number > 0")
+      if parseFloat(maxFeePerGas) <= 0: raise newException(ValueError, "maxFeePerGas should be a number > 0")
   else:
     if parseFloat(gasPrice) <= 0: raise newException(ValueError, "gasPrice should be a number > 0")
   if uuid.isEmptyOrWhitespace(): raise newException(ValueError, "uuid is required")

@@ -38,7 +38,7 @@ proc encodeAbi*(self: Method, obj: object = RootObj()): string =
       result &= encoded.data
   result &= data
 
-proc estimateGas*(self: Method, tx: var EthSend, methodDescriptor: object, success: var bool): string =
+proc estimateGas*(self: Method, tx: var TransactionData, methodDescriptor: object, success: var bool): string =
   success = true
   tx.data = self.encodeAbi(methodDescriptor)
   try:
@@ -48,11 +48,11 @@ proc estimateGas*(self: Method, tx: var EthSend, methodDescriptor: object, succe
     success = false
     result = e.msg
 
-proc send*(self: Method, tx: var EthSend, methodDescriptor: object, password: string, success: var bool): string =
+proc send*(self: Method, tx: var TransactionData, methodDescriptor: object, password: string, success: var bool): string =
   tx.data = self.encodeAbi(methodDescriptor)
   result = eth.sendTransaction(tx, password, success)
 
-proc call*[T](self: Method, tx: var EthSend, methodDescriptor: object, success: var bool): T =
+proc call*[T](self: Method, tx: var TransactionData, methodDescriptor: object, success: var bool): T =
   success = true
   tx.data = self.encodeAbi(methodDescriptor)
   let response: RpcResponse

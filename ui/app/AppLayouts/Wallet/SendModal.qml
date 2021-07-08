@@ -23,6 +23,9 @@ ModalPopup {
         title: qsTrId("error-sending-the-transaction")
         icon: StandardIcon.Critical
         standardButtons: StandardButton.Ok
+        onAccepted: {
+            root.close()
+        }
     }
 
     function sendTransaction() {
@@ -34,7 +37,7 @@ ModalPopup {
                                                  selectRecipient.selectedRecipient.address,
                                                  txtAmount.selectedAmount,
                                                  gasSelector.selectedGasLimit,
-                                                 gasSelector.selectedGasPrice,
+                                                 gasSelector.eip1599Enabled ? "" : gasSelector.selectedGasPrice,
                                                  gasSelector.selectedTipLimit,
                                                  gasSelector.selectedOverallLimit,
                                                  transactionSigner.enteredPassword,
@@ -46,7 +49,7 @@ ModalPopup {
                                                  txtAmount.selectedAsset.address,
                                                  txtAmount.selectedAmount,
                                                  gasSelector.selectedGasLimit,
-                                                 gasSelector.selectedGasPrice,
+                                                 gasSelector.eip1599Enabled ? "" : gasSelector.selectedGasPrice,
                                                  gasSelector.selectedTipLimit,
                                                  gasSelector.selectedOverallLimit,
                                                  transactionSigner.enteredPassword,
@@ -56,7 +59,6 @@ ModalPopup {
         if(!success){
             sendingError.text = qsTr("Invalid transaction parameters")
             sendingError.open()
-            root.close()
         }
     }
 

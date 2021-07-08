@@ -1,6 +1,6 @@
 import json, strformat, strutils, chronicles, sequtils, sugar, httpclient, tables, net
 import json_serialization, stint
-from web3/ethtypes import Address, EthSend, Quantity
+from web3/ethtypes import Address, Quantity
 from web3/conversions import `$`
 from libstatus/core import getBlockByNumber
 import libstatus/accounts as status_accounts
@@ -10,7 +10,7 @@ import libstatus/wallet as status_wallet
 import libstatus/accounts/constants as constants
 import libstatus/eth/[eth, contracts]
 from libstatus/core import getBlockByNumber
-from types import PendingTransactionType, GeneratedAccount, DerivedAccount, Transaction, Setting, GasPricePrediction, `%`, StatusGoException, Network, RpcResponse, RpcException
+from types import PendingTransactionType, TransactionData, GeneratedAccount, DerivedAccount, Transaction, Setting, GasPricePrediction, `%`, StatusGoException, Network, RpcResponse, RpcException
 from utils as libstatus_utils import eth2Wei, gwei2Wei, wei2Gwei, first, toUInt64, parseAddress
 import wallet/[balance_manager, account, collectibles]
 import transactions
@@ -66,12 +66,12 @@ proc initEvents*(self: WalletModel) =
 proc delete*(self: WalletModel) =
   discard
 
-proc buildTokenTransaction(source, to, assetAddress: Address, value: float, transfer: var Transfer, contract: var Erc20Contract, gas = "", gasPrice = ""): EthSend =
+proc buildTokenTransaction(source, to, assetAddress: Address, value: float, transfer: var Transfer, contract: var Erc20Contract, gas = "", gasPrice = "", isEIP1559Enabled: bool = false, maxPriorityFeePerGas = "", maxFeePerGas = ""): TransactionData =
   contract = getErc20Contract(assetAddress)
   if contract == nil:
     raise newException(ValueError, fmt"Could not find ERC-20 contract with address '{assetAddress}' for the current network")
   transfer = Transfer(to: to, value: eth2Wei(value, contract.decimals))
-  transactions.buildTokenTransaction(source, assetAddress, gas, gasPrice)
+  transactions.buildTokenTransaction(source, assetAddress, gas, gasPrice, isEIP1559Enabled, maxPriorityFeePerGas, maxFeePerGas)
 
 proc getKnownTokenContract*(self: WalletModel, address: Address): Erc20Contract =
   getErc20Contracts().concat(getCustomTokens()).getErc20ContractByAddress(address)
@@ -105,7 +105,7 @@ proc getLatestBlock*(): tuple[blockNumber: int, baseFee: string] =
   let response = getBlockByNumber("latest").parseJson()
   if response.hasKey("result"):
     let blockNumber = parseInt($fromHex(Stuint[256], response["result"]["number"].getStr))
-    let baseFee = $fromHex(Stuint[256], response["result"]["baseFeePerGas"].getStr)
+    let baseFee = $fromHex(Stuint[256], response["result"]{"baseFeePerGas"}.getStr)
     return (blockNumber, baseFee)
   return (0, "")
 
@@ -418,7 +418,7 @@ proc isEIP1559Enabled*(self: WalletModel, blockNumber: int):bool =
     of 3: 10499401 # Ropsten
     of 4: 8897988 # Rinkeby
     of 5: 5062605 # Goerli
-    # TODO: add mainnet
+    of 1: 12965000 # Mainnet
     else: -1
   if activationBlock > -1 and blockNumber >= activationBlock:
     result = true

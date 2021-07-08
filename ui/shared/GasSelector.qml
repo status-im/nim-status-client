@@ -367,7 +367,7 @@ Item {
 
         StyledText {
             id: maxPriorityFeeText
-            text: qsTr("Maximum priority fee: %1 ETH").arg( eip1599Enabled ? "TODO" : selectedGasEthValue)
+            text: qsTr("Maximum priority fee: %1 ETH").arg(selectedGasEthValue)
             anchors.top: errorsText.bottom
             anchors.topMargin: 19
             font.pixelSize: 13
