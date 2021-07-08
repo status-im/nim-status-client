@@ -389,7 +389,7 @@ StatusAppLayout {
 
     Connections {
         target: profileModel.settings
-        onSettingsFileChanged: {
+        function onSettingsFileChanged() {
             profileModel.changeLocale(globalSettings.locale)
 
             // Since https://github.com/status-im/status-desktop/commit/93668ff75
@@ -453,7 +453,7 @@ StatusAppLayout {
         target: profileModel
         ignoreUnknownSignals: true
         enabled: removeMnemonicAfterLogin
-        onInitialized: {
+        function onInitialized() {
             profileModel.mnemonic.remove()
         }
     }

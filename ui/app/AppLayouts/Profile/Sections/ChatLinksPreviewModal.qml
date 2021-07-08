@@ -57,7 +57,7 @@ ModalPopup {
 
         Connections {
             target: appMain
-            onSettingsLoaded: {
+            function onSettingsLoaded() {
                 popup.populatePreviewableSites()
             }
         }

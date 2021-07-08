@@ -121,7 +121,7 @@ Rectangle {
 
     Connections {
         target: profileModel.contacts
-        onContactRequestAdded: {
+        function onContactRequestAdded(name, address) {
             if (!appSettings.notifyOnNewRequests) {
                 return
             }

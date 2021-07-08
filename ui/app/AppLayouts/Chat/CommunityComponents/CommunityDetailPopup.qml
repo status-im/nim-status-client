@@ -168,6 +168,8 @@ ModalPopup {
         boundsBehavior: Flickable.StopAtBounds
         delegate: Channel {
             id: channelItem
+            anchors.left: parent.left
+            anchors.right: parent.right
             unviewedMessagesCount: ""
             width: parent.width
             name: model.name

@@ -30,6 +30,8 @@ Item {
         interactive: false
         model: channelListContent.channelModel
         delegate: Channel {
+            anchors.left: parent ? parent.left : undefined
+            anchors.right: parent ? parent.right : undefined
             name: model.name
             muted: model.muted
             lastMessage: model.lastMessage
@@ -82,7 +84,7 @@ Item {
 
     Connections {
         target: chatsModel.channelView.chats
-        onDataChanged: {
+        function onDataChanged() {
             // If the current active channel receives messages and changes its position,
             // refresh the currentIndex accordingly
             if(chatsModel.channelView.activeChannelIndex !== chatGroupsListView.currentIndex){
@@ -93,7 +95,7 @@ Item {
 
     Connections {
         target: chatsModel.channelView
-        onActiveChannelChanged: {
+        function onActiveChannelChanged() {
             chatsModel.messageView.hideLoadingIndicator()
             chatGroupsListView.currentIndex = chatsModel.channelView.activeChannelIndex
             SelectedMessage.reset();

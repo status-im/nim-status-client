@@ -46,9 +46,7 @@ Item {
     property bool isVisible: categoryId === filterCategory && (searchStr === "" || name.includes(searchStr))
     
     id: wrapper
-    anchors.right: parent.right
     anchors.top: applicationWindow.top
-    anchors.left: parent.left
     visible: isVisible ? true : false
     height: isVisible ? rectangle.height + (isCompact ? 4 : Style.current.halfPadding) : 0
 
@@ -56,7 +54,7 @@ Item {
         Connections {
             enabled: realChatType === Constants.chatTypeOneToOne
             target: profileModel.contacts.list
-            onContactChanged: {
+            function onContactChanged(pubkey) {
                 if (pubkey === wrapper.chatId) {
                     wrapper.profileImage = appMain.getProfileImage(wrapper.chatId)
                 }

@@ -71,7 +71,7 @@ Item {
     Connections {
         target: walletModel.historyView
         // onHistoryWasFetched: checkIfHistoryIsBeingFetched()
-        onLoadingTrxHistoryChanged: {
+        function onLoadingTrxHistoryChanged(isLoading, address) {
             if (walletModel.accountsView.currentAccount.address.toLowerCase() === address.toLowerCase()) {
                 loadingImg.active = isLoading
             }

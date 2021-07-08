@@ -145,7 +145,7 @@ Item {
             textField.color: !root.isCurrentUser ? Style.current.textColor : Style.current.currentUserTextColor
             Connections {
                 target: appSettings.useCompactMode ? null : chatBox
-                onLongChatTextChanged: {
+                function onLongChatTextChanged() {
                     chatText.setWidths()
                 }
             }

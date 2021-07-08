@@ -552,7 +552,7 @@ Rectangle {
 
     Connections {
         target: applicationWindow.dragAndDrop
-        onDroppedOnValidScreen: (drop) => {
+        function onDroppedOnValidScreen(drop) {
             let validImages = validateImages(drop.urls)
             if (validImages.length > 0) {
                 showImageArea(validImages)

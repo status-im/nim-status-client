@@ -41,7 +41,7 @@ Item {
 
     Connections {
         target: profileModel.ens
-        onDetailsObtained: {
+        function onDetailsObtained(ensName, address, pubkey) {
             if(username != ensName) return;
                 walletAddressLbl.text = address;
                 walletAddressLbl.textToCopy = address;
@@ -50,7 +50,7 @@ Item {
                 walletAddressLbl.visible = true;
                 keyLbl.visible = true;
         }
-        onLoading: {
+        function onLoading(isLoading) {
             loadingImg.active = isLoading
             if(!isLoading) return;
             walletAddressLbl.visible = false;

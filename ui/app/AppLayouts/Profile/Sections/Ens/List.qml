@@ -324,10 +324,10 @@ Item {
 
         Connections {
             target: profileModel.ens
-            onPreferredUsernameChanged: {
+            function onPreferredUsernameChanged() {
                 messagesShownAs.visible = shouldDisplayExampleMessage()
             }
-            onUsernameConfirmed: {
+            function onUsernameConfirmed(username) {
                 messagesShownAs.visible = shouldDisplayExampleMessage()
                 chatSettingsLabel.visible = true
             }

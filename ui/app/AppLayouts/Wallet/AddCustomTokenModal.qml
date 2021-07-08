@@ -65,7 +65,7 @@ ModalPopup {
     Item {
         Connections {
             target: walletModel.tokensView.customTokenList
-            onTokenDetailsWereResolved: {
+            function onTokenDetailsWereResolved(tokenDetails) {
                 const jsonObj = JSON.parse(tokenDetails)
                 if (jsonObj.error) {
                     validationError = jsonObj.error

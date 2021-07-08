@@ -243,7 +243,7 @@ $(APPIMAGE_TOOL):
 	echo -e "\e[92mFetching:\e[39m appimagetool"
 	rm -rf tmp/linux
 	mkdir -p tmp/linux/tools
-	wget https://github.com/AppImage/AppImageKit/releases/download/continuous/$(_APPIMAGE_TOOL)
+	curl -L https://github.com/AppImage/AppImageKit/releases/download/continuous/$(_APPIMAGE_TOOL) --output $(_APPIMAGE_TOOL)
 	mv $(_APPIMAGE_TOOL) tmp/linux/tools/
 	chmod +x $(APPIMAGE_TOOL)
 

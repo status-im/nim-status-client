@@ -693,7 +693,9 @@ property Component sendTransactionModalComponent: SignTransactionModal {}
 
     Connections {
         target: currentWebView
-        onUrlChanged: obtainAddress()
+        function onUrlChanged(){
+            obtainAddress();
+        }
     }
 
     ProgressBar {

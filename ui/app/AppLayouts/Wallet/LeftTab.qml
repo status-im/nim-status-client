@@ -69,7 +69,6 @@ Rectangle {
         }
     }
 
-
     Component {
         id: walletDelegate
 
@@ -185,7 +184,98 @@ Rectangle {
             anchors.fill: parent
             boundsBehavior: Flickable.StopAtBounds
 
-            delegate: walletDelegate
+            delegate: Rectangle {
+                property bool selected: index === selectedAccount
+                property bool hovered
+
+                id: rectangle
+                height: 64
+                color: {
+                    if (selected) {
+                        return Style.current.menuBackgroundActive
+                    }
+                    if (hovered) {
+                        return Style.current.backgroundHoverLight
+                    }
+                    return Style.current.transparent
+                }
+                radius: Style.current.radius
+                anchors.right: parent ? parent.right : undefined
+                anchors.left: parent ? parent.left : undefined
+                anchors.rightMargin: Style.current.padding
+                anchors.leftMargin: Style.current.padding
+
+                SVGImage {
+                    id: walletIcon
+                    width: 12
+                    height: 12
+                    anchors.top: parent.top
+                    anchors.topMargin: Style.current.smallPadding
+                    anchors.left: parent.left
+                    anchors.leftMargin: Style.current.padding
+                    source: "../../img/walletIcon.svg"
+                }
+                ColorOverlay {
+                    anchors.fill: walletIcon
+                    source: walletIcon
+                    color: Utils.getCurrentThemeAccountColor(iconColor) || Style.current.accountColors[0]
+                }
+                StyledText {
+                    id: walletName
+                    text: name
+                    elide: Text.ElideRight
+                    anchors.right: walletBalance.left
+                    anchors.rightMargin: Style.current.smallPadding
+                    anchors.top: parent.top
+                    anchors.topMargin: Style.current.smallPadding
+                    anchors.left: walletIcon.right
+                    anchors.leftMargin: Style.current.smallPadding
+
+                    font.pixelSize: 15
+                    font.weight: Font.Medium
+                    color: Style.current.textColor
+                }
+                StyledText {
+                    id: walletAddress
+                    font.family: Style.current.fontHexRegular.name
+                    text: address
+                    anchors.right: parent.right
+                    anchors.rightMargin: parent.width/2
+                    elide: Text.ElideMiddle
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: Style.current.smallPadding
+                    anchors.left: walletIcon.left
+                    font.pixelSize: 15
+                    font.weight: Font.Medium
+                    color: Style.current.secondaryText
+                    opacity: selected ? 0.7 : 1
+                }
+                StyledText {
+                    id: walletBalance
+                    text: isLoading ? "..." : Utils.toLocaleString(fiatBalance, globalSettings.locale) + " " + walletModel.defaultCurrency.toUpperCase()
+                    anchors.top: parent.top
+                    anchors.topMargin: Style.current.smallPadding
+                    anchors.right: parent.right
+                    anchors.rightMargin: Style.current.padding
+                    font.pixelSize: 15
+                    font.weight: Font.Medium
+                    color: Style.current.textColor
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onEntered: {
+                        rectangle.hovered = true                    
+                    }
+                    onExited: {
+                        rectangle.hovered = false
+                    }
+                    onClicked: {
+                        changeSelectedAccount(index)
+                    }
+                }
+            }
 
             ListModel {
                 id: exampleWalletModel

@@ -124,6 +124,7 @@ ScrollView {
             model: chatsModel.messageList
             delegate: Message {
                 id: msgDelegate
+                width: chatLogView.width
                 fromAuthor: model.fromAuthor
                 chatId: model.chatId
                 userName: model.userName

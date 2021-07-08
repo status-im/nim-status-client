@@ -94,7 +94,7 @@ Item {
 
         Connections {
             target: image
-            onStatusChanged: {
+            function onStatusChanged() {
                 if (image.status === Image.Ready) {
                     selectorRectangle.initialSetup()
                     selectorRectangle.visible = true

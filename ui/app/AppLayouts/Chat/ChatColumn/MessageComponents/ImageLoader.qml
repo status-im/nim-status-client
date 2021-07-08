@@ -42,7 +42,7 @@ Item {
 
     Connections {
         target: applicationWindow
-        onActiveChanged: {
+        function onActiveChanged() {
             if (applicationWindow.active === false) {
                 imageMessage.playing = false
             } else {

@@ -40,7 +40,7 @@ Popup {
     }
     Connections {
         target: chatsModel
-        onOnlineStatusChanged: {
+        function onOnlineStatusChanged(connected) {
             root.close()
         }
     }
@@ -260,7 +260,7 @@ Popup {
     }
     Connections {
         target: chatsModel.stickers
-        onStickerPacksLoaded: {
+        function onStickerPacksLoaded() {
             root.stickerPacksLoaded = true
             stickerPackListView.visible = true
             loadingGrid.active = false

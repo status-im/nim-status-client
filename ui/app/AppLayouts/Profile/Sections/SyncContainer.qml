@@ -13,7 +13,7 @@ Item {
 
     Connections {
         target: profileModel.mailservers
-        onActiveMailserverChanged: (activeMailserver) => {
+        function onActiveMailserverChanged(activeMailserver) {
             syncContainer.activeMailserver = activeMailserver
         }
     }

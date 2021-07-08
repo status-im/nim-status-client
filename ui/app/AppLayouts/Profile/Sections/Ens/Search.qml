@@ -126,7 +126,7 @@ Item {
 
             Connections {
                 target: profileModel.ens
-                onEnsWasResolved: {
+                function onEnsWasResolved(ensResult) {
                     if(!validate(ensUsername.text)) return;
                     valid = false;
                     loading = false;

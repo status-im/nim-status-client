@@ -240,13 +240,13 @@ ModalPopup {
 
         Connections {
             target: chatsModel.channelView
-            onActiveChannelChanged: {
+            function onActiveChannelChanged() {
                 if (popup.channelType === GroupInfoPopup.ChannelType.ActiveChannel) {
                     popup.channel = chatsModel.channelView.activeChannel
                     resetSelectedMembers()
                 }
             }
-            onContextChannelChanged: {
+            function onContextChannelChanged() {
                 if (popup.channelType === GroupInfoPopup.ChannelType.ContextChannel) {
                     popup.channel = chatsModel.channelView.contextChannel
                     resetSelectedMembers()

@@ -72,7 +72,7 @@ export PATH=`"/c/BuildTools/MSBuild/Current/Bin:/c/BuildTools/VC/Tools/MSVC/14.2
 # Stop the script after first error
 $ErrorActionPreference = 'Stop'
 # Version of Qt SDK available form aqt
-$QtVersion = "5.14.2"
+$QtVersion = "5.15.2"
 
 # Don't run when sourcing script
 If ($MyInvocation.InvocationName -ne ".") {

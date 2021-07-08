@@ -270,14 +270,14 @@ Item {
 
     Connections {
         target: ensContainer
-        onConnect: {
+        function onConnect(ensUsername) {
             addedUsername = ensUsername;
         }
     }
 
     Connections {
         target: profileModel.ens
-        onTransactionWasSent: {
+        function onTransactionWasSent(txResult) {
             //% "Transaction pending..."
             toastMessage.title = qsTrId("ens-transaction-pending")
             toastMessage.source = "../../../img/loading.svg"
@@ -286,7 +286,7 @@ Item {
             toastMessage.link = `${walletModel.utilsView.etherscanLink}/${txResult}`
             toastMessage.open()
         }
-        onTransactionCompleted: {
+        function onTransactionCompleted(success, txHash, username, trxType, revertReason) {
             switch(trxType){
                 case "RegisterENS":
                     toastMessage.title = !success ? 

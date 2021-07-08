@@ -41,16 +41,16 @@ Column {
             
             Connections {
                 target: appSettings
-                onWhitelistedUnfurlingSitesChanged: {
+                function onWhitelistedUnfurlingSitesChanged() {
                     fetched = false
                     linkMessageLoader.sourceComponent = undefined
                     linkMessageLoader.sourceComponent = linkMessageLoader.getSourceComponent()
                 }
-                onNeverAskAboutUnfurlingAgainChanged: {
+                function onNeverAskAboutUnfurlingAgainChanged() {
                     linkMessageLoader.sourceComponent = undefined
                     linkMessageLoader.sourceComponent = linkMessageLoader.getSourceComponent()
                 }
-                onDisplayChatImagesChanged: {
+                function onDisplayChatImagesChanged() {
                     linkMessageLoader.sourceComponent = undefined
                     linkMessageLoader.sourceComponent = linkMessageLoader.getSourceComponent()
                 }
@@ -59,7 +59,7 @@ Column {
                 id: linkFetchConnections
                 enabled: false
                 target: chatsModel
-                onLinkPreviewDataWasReceived: {
+                function onLinkPreviewDataWasReceived(previewData) {
                     let response
                     try {
                         response = JSON.parse(previewData)
@@ -95,7 +95,7 @@ Column {
                 id: linkCommunityFetchConnections
                 enabled: false
                 target: chatsModel.communities
-                onCommunityAdded: {
+                function onCommunityAdded(communityId) {
                     if (communityId !== linkData.communityId) {
                         return
                     }

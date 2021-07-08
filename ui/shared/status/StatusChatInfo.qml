@@ -30,7 +30,7 @@ Item {
     Connections {
         enabled: realChatType === Constants.chatTypeOneToOne
         target: profileModel.contacts.list
-        onContactChanged: {
+        function onContactChanged(pubkey) {
             if (pubkey === root.chatId) {
                 root.profileImage = appMain.getProfileImage(root.chatId) || ""
             }
@@ -102,7 +102,7 @@ Item {
 
         Connections {
             target: profileModel.contacts
-            onContactChanged: {
+            function onContactChanged(publicKey) {
                 if(root.chatId === publicKey){
                     // Hack warning: Triggering reload to avoid changing the current text binding
                     var tmp = chatId;

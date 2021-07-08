@@ -115,7 +115,7 @@ ModalPopup {
             }
             Connections {
                 target: chatsModel.stickers
-                onGasEstimateReturned: {
+                function onGasEstimateReturned(estimate, uuid) {
                     if (uuid === gasSelector.uuid) {
                         gasSelector.selectedGasLimit = estimate
                     }
@@ -214,7 +214,7 @@ ModalPopup {
 
         Connections {
             target: chatsModel.stickers
-            onTransactionWasSent: {
+            function onTransactionWasSent(txResult) {
                 //% "Transaction pending..."
                 toastMessage.title = qsTrId("ens-transaction-pending")
                 toastMessage.source = "../../../img/loading.svg"
@@ -223,7 +223,7 @@ ModalPopup {
                 toastMessage.link = `${walletModel.utilsView.etherscanLink}/${txResult}`
                 toastMessage.open()
             }
-            onTransactionCompleted: {
+            function onTransactionCompleted(success, txHash, revertReason) {
                 toastMessage.title = !success ? 
                                      //% "Could not buy Stickerpack"
                                      qsTrId("could-not-buy-stickerpack")

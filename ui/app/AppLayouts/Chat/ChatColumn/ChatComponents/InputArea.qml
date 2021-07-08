@@ -12,7 +12,7 @@ Item {
 
     Connections {
         target: chatsModel.messageView
-        onLoadingMessagesChanged:
+        function onLoadingMessagesChanged(value) {
             if(value){
                 loadingMessagesIndicator.active = true
             } else {
@@ -20,6 +20,7 @@ Item {
                     loadingMessagesIndicator.active = false;
                 }, 5000);
             }
+        }
     }
 
     Loader {

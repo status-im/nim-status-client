@@ -81,7 +81,7 @@ Rectangle {
 
         Connections {
             target: browserModel
-            onBookmarksChanged: {
+            function onBookmarksChanged() {
                 addressBar.currentFavorite = Qt.binding(function () {return getCurrentFavorite(currentWebView.url)})
             }
         }

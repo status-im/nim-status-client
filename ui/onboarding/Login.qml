@@ -165,7 +165,7 @@ Item {
         Connections {
             target: loginModel
             ignoreUnknownSignals: true
-            onLoginResponseChanged: {
+            function onLoginResponseChanged(error) {
                 if (error) {
                     errMsg.visible = true;
                     loading = false;

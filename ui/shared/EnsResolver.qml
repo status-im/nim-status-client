@@ -42,7 +42,7 @@ Item {
 
     Connections {
         target: walletModel.ensView
-        onEnsWasResolved: {
+        function onEnsWasResolved(resolvedPubKey, resolvedAddress) {
             if (uuid !== root.uuid) {
                 return
             }

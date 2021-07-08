@@ -178,7 +178,7 @@ Popup {
     Connections {
         id: connectionSettings
         target: appMain
-        onSettingsLoaded: {
+        function onSettingsLoaded() {
             connectionSettings.enabled = false
             // Add recent
             if (!appSettings.recentEmojis || !appSettings.recentEmojis.length) {
