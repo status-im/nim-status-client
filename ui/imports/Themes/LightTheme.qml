@@ -45,7 +45,8 @@ Theme {
     property color currentUserTextColor: white
     property color secondaryBackground: lightBlue
     property color inputBackground: grey
-    property color secondaryinputBackground: fivePercentBlack
+    property color secondaryInputBackground: fivePercentBlack
+    property color secondaryInputText: textColor
     property color inputBorderFocus: blue
     property color secondaryMenuBorder: grey3
     property color inputColor: black

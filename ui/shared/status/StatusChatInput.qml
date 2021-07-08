@@ -740,7 +740,7 @@ Rectangle {
             return messageInputField.implicitHeight
         }
 
-        color: isEdit ? Style.current.secondaryinputBackground : Style.current.inputBackground
+        color: isEdit ? Style.current.secondaryInputBackground : Style.current.inputBackground
         radius: control.isStatusUpdateInput ? 36 :
           height > defaultInputFieldHeight + 1 || extendedArea.visible ? 16 : 32
 
@@ -784,7 +784,7 @@ Rectangle {
             anchors.bottom: control.isStatusUpdateInput ? undefined : messageInput.top
             anchors.top: control.isStatusUpdateInput ? messageInput.bottom : undefined
             anchors.topMargin: control.isStatusUpdateInput ? -Style.current.halfPadding : 0
-            color: isEdit ? Style.current.secondaryinputBackground : Style.current.inputBackground
+            color: isEdit ? Style.current.secondaryInputBackground : Style.current.inputBackground
             radius: control.isStatusUpdateInput ? 36 : 16
 
             Rectangle {
@@ -864,7 +864,7 @@ Rectangle {
                 placeholderText: qsTrId("type-a-message")
                 placeholderTextColor: Style.current.secondaryText
                 selectByMouse: true
-                color: Style.current.textColor
+                color: isEdit ? Style.current.secondaryInputText : Style.current.textColor
                 topPadding: control.isStatusUpdateInput ? 18 : Style.current.smallPadding
                 bottomPadding: control.isStatusUpdateInput ? 14 : 12
                 Keys.onPressed: onKeyPress(event)
