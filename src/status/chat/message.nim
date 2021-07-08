@@ -72,6 +72,7 @@ type Message* = object
   hasMention*: bool
   isPinned*: bool
   pinnedBy*: string
+  deleted*: bool
 
 type Reaction* = object
   id*: string

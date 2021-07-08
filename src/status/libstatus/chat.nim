@@ -127,6 +127,9 @@ proc editMessage*(messageId: string, msg: string): string =
     }
   ])
 
+proc deleteMessageAndSend*(messageId: string): string =
+  callPrivateRPC("deleteMessageAndSend".prefix, %* [messageId])
+
 proc rpcReactions*(chatId: string, cursorVal: JsonNode, limit: int, success: var bool): string =
   success = true
   try:

@@ -209,6 +209,8 @@ Item {
         // Get contact nickname
         let nickname = appMain.getUserNickname(fromAuthor)
         messageContextMenu.messageId = root.messageId
+        messageContextMenu.isCurrentUser = root.isCurrentUser
+        messageContextMenu.isText = root.isText
         messageContextMenu.linkUrls = root.linkUrls
         messageContextMenu.isProfile = !!isProfileClick
         messageContextMenu.isSticker = isSticker

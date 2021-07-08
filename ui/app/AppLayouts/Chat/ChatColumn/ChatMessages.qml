@@ -202,7 +202,7 @@ SplitView {
                 }
 
                 onMessageNotificationPushed: function(chatId, msg, messageType, chatType, timestamp, identicon, username, hasMention, isAddedContact, channelName) {
-                    if (messageType == Constants.editType) return;
+                    if (messageType === Constants.editType) return;
                     if (appSettings.notificationSetting == Constants.notifyAllMessages || 
                         (appSettings.notificationSetting == Constants.notifyJustMentions && hasMention)) {
                         if (chatId === chatsModel.channelView.activeChannel.id && applicationWindow.active === true) {

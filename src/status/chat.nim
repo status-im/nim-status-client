@@ -249,6 +249,10 @@ proc editMessage*(self: ChatModel, messageId: string, msg: string) =
   var response = status_chat.editMessage(messageId, msg)
   discard self.processMessageUpdateAfterSend(response, false)
 
+proc deleteMessageAndSend*(self: ChatModel, messageId: string) =
+  var response = status_chat.deleteMessageAndSend(messageId)    
+  discard self.processMessageUpdateAfterSend(response, false)
+
 proc sendImage*(self: ChatModel, chatId: string, image: string) =
   var response = status_chat.sendImageMessage(chatId, image)
   discard self.processMessageUpdateAfterSend(response)

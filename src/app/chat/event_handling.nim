@@ -37,6 +37,8 @@ proc handleChatEvents(self: ChatController) =
       if (message.replace != ""):
         # Delete the message that this message replaces
         self.view.deleteMessage(message.chatId, message.replace)
+      if (message.deleted):
+        self.view.deleteMessage(message.chatId, message.id)
     self.view.reactions.push(evArgs.emojiReactions)
     if (evArgs.communities.len > 0):
       for community in evArgs.communities:

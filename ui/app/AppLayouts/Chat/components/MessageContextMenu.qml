@@ -247,7 +247,7 @@ PopupMenu {
         onTriggered: {
             onClickEdit();
         }
-        icon.source: "../../../img/profileActive.svg"
+        icon.source: "../../../img/edit-message.svg"
         icon.width: 16
         icon.height: 16
         enabled: isCurrentUser && isText
@@ -272,5 +272,18 @@ PopupMenu {
         icon.width: 16
         icon.height: 16
         enabled: !isSticker && !emojiOnly
+    }
+
+    Action {
+        id: deleteMessageAction
+        text: qsTr("Delete message")
+        onTriggered: {
+            console.log("delete", messageId);
+            chatsModel.messageView.deleteMessage(messageId)
+        }
+        icon.source: "../../../img/delete.svg"
+        icon.width: 16
+        icon.height: 16
+        enabled: isCurrentUser
     }
 }

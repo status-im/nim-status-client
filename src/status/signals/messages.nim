@@ -318,6 +318,7 @@ proc toMessage*(jsonMsg: JsonNode, pk: string): Message =
       audio: $jsonMsg{"audio"}.getStr,
       communityId: $jsonMsg{"communityId"}.getStr,
       audioDurationMs: jsonMsg{"audioDurationMs"}.getInt,
+      deleted: jsonMsg{"deleted"}.getBool,
       hasMention: false
     )
 
