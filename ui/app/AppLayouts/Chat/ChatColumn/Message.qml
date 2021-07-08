@@ -305,7 +305,8 @@ Item {
             visible: {
                 return gapNowAndOldest < maxGapInSeconds
                         && gapNowAndJoined > maxGapInSeconds
-                        && (chatsModel.activeChannel.chatType !== Constants.chatTypePrivateGroupChat || chatsModel.activeChannel.isMember)
+                        && (chatsModel.channelView.activeChannel.chatType !== Constants.chatTypePrivateGroupChat
+                            || chatsModel.channelView.activeChannel.isMember)
             }
             height: childrenRect.height + Style.current.smallPadding * 2
             anchors.left: parent.left

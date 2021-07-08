@@ -118,16 +118,16 @@ SplitView {
                     radius: 16
                 }
                 onClicked: {
-                    root.newMessages = 0
+                    newMessages = 0
                     scrollDownButton.visible = false
                     chatLogView.scrollToBottom(true)
                 }
 
                 StyledText {
                     id: nbMessages
-                    visible: root.newMessages > 0
+                    visible: newMessages > 0
                     width: visible ? implicitWidth : 0
-                    text: root.newMessages
+                    text: newMessages
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     color: Style.current.pillButtonTextColor
@@ -179,6 +179,14 @@ SplitView {
             }
 
             Connections {
+                target: chatsModel
+
+                onAppReady: {
+                    chatLogView.scrollToBottom(true)
+                }
+            }
+
+            Connections {
                 target: chatsModel.messageView
                 onMessagesLoaded: {
                     loadingMessages = false;
@@ -194,12 +202,8 @@ SplitView {
 
                 onNewMessagePushed: {
                     if (!chatLogView.scrollToBottom()) {
-                        root.newMessages++
+                        newMessages++
                     }
-                }
-
-                onAppReady: {
-                    chatLogView.scrollToBottom(true)
                 }
 
                 onMessageNotificationPushed: function(chatId, msg, messageType, chatType, timestamp, identicon, username, hasMention, isAddedContact, channelName) {

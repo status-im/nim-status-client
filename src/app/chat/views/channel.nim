@@ -247,3 +247,7 @@ QtObject:
     let selectedChannel = self.getChannel(channelIndex)
     if (selectedChannel == nil): return false
     result = selectedChannel.muted  
+
+  proc removeChat*(self: ChannelView, chatId: string) =
+    discard self.chats.removeChatItemFromList(chatId)
+    self.setActiveChannel(backToFirstChat)
