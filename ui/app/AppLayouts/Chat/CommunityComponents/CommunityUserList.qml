@@ -42,11 +42,12 @@ Rectangle {
             property string nickname: appMain.getUserNickname(model.pubKey)
 
             publicKey: model.pubKey
-            name: !model.userName.endsWith(".eth") && !!nickname ?
-                        nickname : Utils.removeStatusEns(model.userName)
+            name:  chatsModel.communities.activeCommunity.memberLastSeen(model.pubKey) + "--" + ( !model.userName.endsWith(".eth") && !!nickname ?
+                        nickname : Utils.removeStatusEns(model.userName))
             identicon: model.identicon
             lastSeen: chatsModel.communities.activeCommunity.memberLastSeen(model.pubKey)
             currentTime: svRoot.currentTime
+            statusType: chatsModel.communities.activeCommunity.memberStatus(model.pubKey)
         }
     }
 }

@@ -47,11 +47,10 @@ QtObject:
     if unreadTotal != community.unviewedMessagesCount:
       community.unviewedMessagesCount = unreadTotal
 
-  proc updateMemberVisibility*(self: CommunitiesView, communityId, pubKey, timestamp: string) =
-    self.joinedCommunityList.updateMemberVisibility(communityId, pubKey, timestamp)
-    if communityId == self.activeCommunity.communityItem.id:
-      self.activeCommunity.setCommunityItem(self.joinedCommunityList.getCommunityById(communityId))
-      self.activeCommunity.triggerMemberUpdate()
+  proc updateMemberVisibility*(self: CommunitiesView, statusUpdate: StatusUpdate) =
+    self.joinedCommunityList.updateMemberVisibility(statusUpdate)
+    self.activeCommunity.setCommunityItem(self.joinedCommunityList.getCommunityById(self.activeCommunity.communityItem.id))
+    self.activeCommunity.triggerMemberUpdate()
 
   proc updateCommunityChat*(self: CommunitiesView, newChat: Chat) =
     var community = self.joinedCommunityList.getCommunityById(newChat.communityId)

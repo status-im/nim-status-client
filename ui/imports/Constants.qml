@@ -80,6 +80,10 @@ QtObject {
     readonly property string linux: "linux"
     readonly property string mac: "mac"
 
+    readonly property int statusType_Unknown: 0
+    readonly property int statusType_Online: 1
+    readonly property int statusType_DoNotDisturb: 2
+
     // Transaction states
     readonly property int addressRequested: 1
     readonly property int declined: 2

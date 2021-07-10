@@ -107,6 +107,17 @@ type CommunityCategory* = object
   name*: string
   position*: int
 
+type StatusUpdateType* {.pure.}= enum
+  Unknown = 0,
+  Online = 1, 
+  DoNotDisturb = 2
+
+type StatusUpdate* = object
+  publicKey*: string
+  statusType*: StatusUpdateType
+  clock*: int64
+  text*: string
+
 type Community* = object
   id*: string
   name*: string
@@ -129,7 +140,7 @@ type Community* = object
   communityImage*: IdentityImage
   membershipRequests*: seq[CommunityMembershipRequest]
   communityColor*: string
-  lastSeen*: OrderedTable[string, string]
+  memberStatus*: OrderedTable[string, StatusUpdate]
 
 type ActivityCenterNotification* = ref object of RootObj
   id*: string # ID is the id of the chat, for public chats it is the name e.g. status, for one-to-one is the hex encoded public key and for group chats is a random uuid appended with the hex encoded pk of the creator of the chat

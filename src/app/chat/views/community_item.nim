@@ -199,10 +199,14 @@ QtObject:
     self.members.triggerUpdate()
 
   proc memberLastSeen*(self: CommunityItemView, pubKey: string): string {.slot.} =
-    if self.communityItem.lastSeen.hasKey(pubKey):
-      result = self.communityItem.lastSeen[pubKey]
+    if self.communityItem.memberStatus.hasKey(pubKey):
+      result = $self.communityItem.memberStatus[pubKey].clock
     else:
       result = "0"
+
+  proc memberStatus*(self: CommunityItemView, pubKey: string): int {.slot.} =
+    if self.communityItem.memberStatus.hasKey(pubKey):
+      result = self.communityItem.memberStatus[pubKey].statusType.int
 
   proc hasMember*(self: CommunityItemView, pubKey: string): bool {.slot.} =
     result = self.members.members.contains(pubKey)

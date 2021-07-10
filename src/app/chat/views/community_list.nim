@@ -171,14 +171,14 @@ QtObject:
       if community.id == communityId:
         return community
 
-  proc updateMemberVisibility*(self: CommunityList, communityId, pubKey, timestamp: string) =
+  proc updateMemberVisibility*(self: CommunityList, statusUpdate: StatusUpdate) =
     for community in self.communities.mitems:
-      if community.id != communityId: continue
-      if community.lastSeen.haskey(pubKey):
-        if parseBiggestInt(timestamp) >  parseBiggestInt(community.lastSeen[pubKey]):
-          community.lastSeen[pubKey] = timestamp
+      if not community.members.contains(statusUpdate.publicKey): continue
+      if community.memberStatus.haskey(statusUpdate.publicKey):
+        if statusUpdate.clock > community.memberStatus[statusUpdate.publicKey].clock:
+          community.memberStatus[statusUpdate.publicKey] = statusUpdate
       else:
-        community.lastSeen[pubKey] = timestamp
+        community.memberStatus[statusUpdate.publicKey] = statusUpdate
       break
     
   proc addChannelToCommunity*(self: CommunityList, communityId: string, chat: Chat) =
@@ -209,7 +209,7 @@ QtObject:
     let topLeft = self.createIndex(index, index, nil)
     let bottomRight = self.createIndex(index, index, nil)
     var oldCommunity = self.communities[index]
-    community.lastSeen = oldCommunity.lastSeen
+    community.memberStatus = oldCommunity.memberStatus
     self.communities[index] = community
     self.dataChanged(topLeft, bottomRight, @[CommunityRoles.Name.int, CommunityRoles.Description.int, CommunityRoles.UnviewedMessagesCount.int, CommunityRoles.ThumbnailImage.int])
 

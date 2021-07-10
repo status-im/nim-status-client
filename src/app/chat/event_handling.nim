@@ -33,6 +33,12 @@ proc handleChatEvents(self: ChatController) =
     self.view.updateUsernames(evArgs.contacts)
     self.view.updateChats(evArgs.chats)
     self.view.pushMessages(evArgs.messages)
+
+    # TODO: update current user status
+
+    for statusUpdate in evArgs.statusUpdates:
+      self.view.communities.updateMemberVisibility(statusUpdate)            
+
     for message in evArgs.messages:
       if (message.replace != ""):
         # Delete the message that this message replaces

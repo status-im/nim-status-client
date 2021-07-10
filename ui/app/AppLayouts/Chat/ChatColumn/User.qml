@@ -10,6 +10,7 @@ Item {
     property string name: "channelName"
     property string lastSeen: ""
     property string identicon
+    property int statusType: Constants.statusType_Online
     property bool hovered: false
     property bool enableMouseArea: true
     property var currentTime
@@ -80,16 +81,16 @@ Item {
             width: 10
             radius: 20
             color: {
-                let lastSeenMinutesAgo = (currentTime - parseInt(lastSeen)) / 1000 / 60
+                let lastSeenMinutesAgo = (currentTime/1000 - parseInt(lastSeen)) / 60
                 
                 if (!chatsModel.isOnline) {
                     return Style.current.darkGrey 
                 }
 
                 if (isCurrentUser || lastSeenMinutesAgo < 5){
-                    return Style.current.green;
+                    return statusType == Constants.statusType_DoNotDisturb ? Style.current.red : Style.current.green;
                 } else if (lastSeenMinutesAgo < 20) {
-                    return Style.current.orange
+                    return statusType == Constants.statusType_DoNotDisturb ? Style.current.red : Style.current.orange;
                 }
 
                 return Style.current.darkGrey
