@@ -5,6 +5,7 @@ type Profile* = ref object
   id*, alias*, username*, identicon*, address*, ensName*, localNickname*: string
   ensVerified*: bool
   messagesFromContactsOnly*: bool
+  sendUserStatus*: bool
   identityImage*: IdentityImage
   appearance*: int
   systemTags*: seq[string]

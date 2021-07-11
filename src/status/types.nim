@@ -196,6 +196,7 @@ type
     Fleet = "fleet"
     VisibleTokens = "wallet/visible-tokens"
     PinnedMailservers = "pinned-mailservers"
+    SendUserStatus = "send-status-updates?"
 
   UpstreamConfig* = ref object
     enabled* {.serializedFieldName("Enabled").}: bool
