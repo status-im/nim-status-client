@@ -20,6 +20,7 @@
 import QtQuick 2.13
 import QtQuick.Controls 2.13
 import QtGraphicalEffects 1.13
+import QtQml.Models 2.13
 import "../../../../imports"
 import "../../../../shared"
 import "../../../../shared/status"
@@ -31,11 +32,23 @@ Rectangle {
     property Item delegate
     property alias suggestionsModel: filterItem.model
     property alias filter: filterItem.filter
+    property alias formattedPlainTextFilter: filterItem.formattedFilter
     property alias property: filterItem.property
     property int cursorPosition
     signal itemSelected(var item, int lastAtPosition, int lastCursorPosition)
     property alias listView: listView
     property bool shouldHide: false
+
+    Timer {
+        id: timer
+    }
+
+    onFormattedPlainTextFilterChanged: {
+        // We need to callLater because the sort needs to happen before setting the index
+        Qt.callLater(function () {
+            listView.currentIndex = 0
+        })
+    }
 
     onCursorPositionChanged: {
         if (shouldHide) {
@@ -48,7 +61,7 @@ Rectangle {
     }
 
     function selectCurrentItem() {
-        container.itemSelected(listView.model.get(listView.currentIndex), filterItem.lastAtPosition, filterItem.cursorPosition)
+        container.itemSelected(mentionsListDelegate.items.get(listView.currentIndex).model, filterItem.lastAtPosition, filterItem.cursorPosition)
     }
 
     onVisibleChanged: {
@@ -95,7 +108,7 @@ Rectangle {
 
     ListView {
         id: listView
-        model: container.suggestionsModel
+        model: mentionsListDelegate
         keyNavigationEnabled: true
         anchors.fill: parent
         anchors.topMargin: Style.current.halfPadding
@@ -108,42 +121,94 @@ Rectangle {
         property var selectedItem: selectedIndex == -1 ? null : model[selectedIndex]
         signal suggestionClicked(var item)
 
-        delegate: Rectangle {
-            id: rectangle
-            color: listView.currentIndex === index ? Style.current.backgroundHover : Style.current.transparent
-            border.width: 0
-            width: parent.width
-            height: 42
-            radius: Style.current.radius
+        DelegateModelGeneralized {
+            id: mentionsListDelegate
 
-            StatusImageIdenticon {
-                id: accountImage
-                width: 32
-                height: 32
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: Style.current.smallPadding
-                source: model.identicon
-            }
+            lessThan: [
+                function(left, right) {
+                    // Priorities:
+                    // 1. Match at the start
+                    // 2. Match in the start of one of the three words
+                    // 3. Alphabetical order (also in case of multiple matches at the start of the name)
 
-            StyledText {
-                text: model[container.property.split(",").map(p => p.trim()).find(p => !!model[p])]
-                color: Style.current.textColor
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: accountImage.right
-                anchors.leftMargin: Style.current.smallPadding
-                font.pixelSize: 15
-            }
+                    const leftProp = left[container.property.find(p => !!left[p])].toLowerCase()
+                    const rightProp = right[container.property.find(p => !!right[p])].toLowerCase()
 
-            MouseArea {
-                cursorShape: Qt.PointingHandCursor
-                anchors.fill: parent
-                hoverEnabled: true
-                onEntered: {
-                    listView.currentIndex = index
+                    if (!formattedPlainTextFilter) {
+                        return leftProp < rightProp
+                    }
+
+                    // check the start of the string
+                    const leftMatches = leftProp.startsWith(formattedPlainTextFilter)
+
+                    const rightMatches = rightProp.startsWith(formattedPlainTextFilter)
+
+                    if (leftMatches === true && rightMatches === true) {
+                        return leftProp < rightProp
+                    }
+
+                    if (leftMatches || rightMatches) {
+                        return leftMatches && !rightMatches
+                    }
+
+                    // Check for the start of the 3 word names
+                    let leftMatchesIndex = leftProp.indexOf(" " + formattedPlainTextFilter)
+                    let rightMatchesIndex = rightProp.indexOf(" " + formattedPlainTextFilter)
+                    if (leftMatchesIndex === rightMatchesIndex) {
+                        return leftProp < rightProp
+                    }
+
+                    // Change index so that -1 is not the smallest
+                    if (leftMatchesIndex === -1) {
+                        leftMatchesIndex = 999
+                    }
+                    if (rightMatchesIndex === -1) {
+                        rightMatchesIndex = 999
+                    }
+
+                    return leftMatchesIndex < rightMatchesIndex
                 }
-                onClicked: {
-                    container.itemSelected(model, filterItem.lastAtPosition, filterItem.cursorPosition)
+            ]
+
+            model: container.suggestionsModel
+
+            delegate: Rectangle {
+                id: itemDelegate
+                color: ListView.isCurrentItem ? Style.current.backgroundHover : Style.current.transparent
+                border.width: 0
+                width: parent.width
+                height: 42
+                radius: Style.current.radius
+
+                StatusImageIdenticon {
+                    id: accountImage
+                    width: 32
+                    height: 32
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: Style.current.smallPadding
+                    source: model.identicon
+                }
+
+                StyledText {
+                    text: model[container.property.find(p => !!model[p])]
+                    color: Style.current.textColor
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: accountImage.right
+                    anchors.leftMargin: Style.current.smallPadding
+                    font.pixelSize: 15
+                }
+
+                MouseArea {
+                    cursorShape: Qt.PointingHandCursor
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: {
+                        listView.currentIndex = itemDelegate.DelegateModel.itemsIndex
+                    }
+                    onClicked: {
+                        container.itemSelected(model, filterItem.lastAtPosition, filterItem.cursorPosition)
+                    }
                 }
             }
         }
