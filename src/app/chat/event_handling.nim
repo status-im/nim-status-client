@@ -12,7 +12,6 @@ proc handleChatEvents(self: ChatController) =
     let evArgs = MsgsLoadedArgs(e)
     self.view.pushMessages(evArgs.messages)
     for statusUpdate in evArgs.statusUpdates:
-      echo "updating member visibility", $statusUpdate
       self.view.communities.updateMemberVisibility(statusUpdate)    
       
   # Display emoji reactions
