@@ -142,7 +142,9 @@ Item {
                 isSwitch: true
                 switchChecked: profileModel.profile.sendUserStatus
                 onClicked: function (checked) {
-                    profileModel.setSendUserStatus(checked)
+                    if (profileModel.profile.sendUserStatus !== checked) {
+                        profileModel.setSendUserStatus(checked)
+                    }
                 }
             }
         }

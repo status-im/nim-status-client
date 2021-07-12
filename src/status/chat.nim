@@ -44,6 +44,7 @@ type
 
   MsgsLoadedArgs* = ref object of Args
     messages*: seq[Message]
+    statusUpdates*: seq[StatusUpdate]
 
   ActivityCenterNotificationsArgs* = ref object of Args
     activityCenterNotifications*: seq[ActivityCenterNotification]
@@ -283,6 +284,10 @@ proc chatMessages*(self: ChatModel, chatId: string, initialLoad:bool = true) =
 
   self.events.emit("messagesLoaded", MsgsLoadedArgs(messages: messageTuple[1]))
 
+
+proc statusUpdates*(self: ChatModel) =
+  let statusUpdates = status_chat.statusUpdates()
+  self.events.emit("messagesLoaded", MsgsLoadedArgs(statusUpdates: statusUpdates))
 
 proc chatMessages*(self: ChatModel, chatId: string, initialLoad:bool = true, cursor: string = "", messages: seq[Message]) =
   if not self.msgCursor.hasKey(chatId):

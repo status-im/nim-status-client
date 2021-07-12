@@ -296,6 +296,7 @@ QtObject:
     trace "Loading more messages", chaId = self.channelView.activeChannel.id
     self.status.chat.chatMessages(self.channelView.activeChannel.id, false)
     self.status.chat.chatReactions(self.channelView.activeChannel.id, false)
+    self.status.chat.statusUpdates()
     self.messagesLoaded();
 
   proc loadMoreMessagesWithIndex*(self: MessageView, channelIndex: int) {.slot.} =
@@ -305,6 +306,7 @@ QtObject:
     trace "Loading more messages", chaId = selectedChannel.id
     self.status.chat.chatMessages(selectedChannel.id, false)
     self.status.chat.chatReactions(selectedChannel.id, false)
+    self.status.chat.statusUpdates()
     self.messagesLoaded();
 
   proc loadingMessagesChanged*(self: MessageView, value: bool) {.signal.}

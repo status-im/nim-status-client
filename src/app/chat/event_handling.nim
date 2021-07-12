@@ -9,7 +9,12 @@ import # status-desktop libs
 proc handleChatEvents(self: ChatController) =
   # Display already saved messages
   self.status.events.on("messagesLoaded") do(e:Args):
-    self.view.pushMessages(MsgsLoadedArgs(e).messages)
+    let evArgs = MsgsLoadedArgs(e)
+    self.view.pushMessages(evArgs.messages)
+    for statusUpdate in evArgs.statusUpdates:
+      echo "updating member visibility", $statusUpdate
+      self.view.communities.updateMemberVisibility(statusUpdate)    
+      
   # Display emoji reactions
   self.status.events.on("reactionsLoaded") do(e:Args):
     self.view.reactions.push(ReactionsLoadedArgs(e).reactions)
@@ -34,7 +39,7 @@ proc handleChatEvents(self: ChatController) =
     self.view.updateChats(evArgs.chats)
     self.view.pushMessages(evArgs.messages)
 
-    # TODO: update current user status
+    # TODO: update current user status (once it's possible to switch between ONLINE and DO_NOT_DISTURB)
 
     for statusUpdate in evArgs.statusUpdates:
       self.view.communities.updateMemberVisibility(statusUpdate)            
@@ -111,6 +116,7 @@ proc handleChatEvents(self: ChatController) =
       self.view.setActiveChannel(channel.chat.id)
     self.status.chat.chatMessages(channel.chat.id)
     self.status.chat.chatReactions(channel.chat.id)
+    self.status.chat.statusUpdates()
 
   self.status.events.on("channelLeft") do(e: Args):
     let chatId = ChatIdArg(e).chatId

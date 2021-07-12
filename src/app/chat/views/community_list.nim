@@ -179,7 +179,7 @@ QtObject:
           community.memberStatus[statusUpdate.publicKey] = statusUpdate
       else:
         community.memberStatus[statusUpdate.publicKey] = statusUpdate
-      break
+      
     
   proc addChannelToCommunity*(self: CommunityList, communityId: string, chat: Chat) =
     var community = self.getCommunityById(communityId)
