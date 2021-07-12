@@ -1,24 +1,20 @@
-import ../libstatus/settings as status_settings
-
 proc formatChatUpdate(response: JsonNode): (seq[Chat], seq[Message]) =
   var chats: seq[Chat] = @[]
   var messages: seq[Message] = @[]
-  let pk = status_settings.getSetting[string](Setting.PublicKey, "0x0")
   if response["result"]{"messages"} != nil:
     for jsonMsg in response["result"]["messages"]:
-      messages.add(jsonMsg.toMessage(pk))
+      messages.add(jsonMsg.toMessage())
   if response["result"]{"chats"} != nil:
     for jsonChat in response["result"]["chats"]:
       chats.add(jsonChat.toChat)
   result = (chats, messages)
 
 proc processChatUpdate(self: ChatModel, response: JsonNode): (seq[Chat], seq[Message]) =
-  let pk = status_settings.getSetting[string](Setting.PublicKey, "0x0")
   var chats: seq[Chat] = @[]
   var messages: seq[Message] = @[]
   if response{"result"}{"messages"} != nil:
     for jsonMsg in response["result"]["messages"]:
-      messages.add(jsonMsg.toMessage(pk))
+      messages.add(jsonMsg.toMessage())
   if response{"result"}{"chats"} != nil:
     for jsonChat in response["result"]["chats"]:
       let chat = jsonChat.toChat

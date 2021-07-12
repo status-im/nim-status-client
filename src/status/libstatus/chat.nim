@@ -77,18 +77,16 @@ proc parseChatMessagesResponse*(rpcResult: JsonNode): (string, seq[Message]) =
   var messages: seq[Message] = @[]
   let messagesObj = rpcResult{"messages"}
   if(messagesObj != nil and messagesObj.kind != JNull):
-    let pk = status_settings.getSetting[string](Setting.PublicKey, "0x0")
     for jsonMsg in messagesObj:
-      messages.add(jsonMsg.toMessage(pk))
+      messages.add(jsonMsg.toMessage())
   return (rpcResult{"cursor"}.getStr, messages)
 
 proc parseActivityCenterNotifications*(rpcResult: JsonNode): (string, seq[ActivityCenterNotification]) =
-  let pk = status_settings.getSetting[string](Setting.PublicKey, "0x0")
   var notifs: seq[ActivityCenterNotification] = @[]
   var msg: Message
   if rpcResult{"notifications"}.kind != JNull:
     for jsonMsg in rpcResult["notifications"]:
-      notifs.add(jsonMsg.toActivityCenterNotification(pk))
+      notifs.add(jsonMsg.toActivityCenterNotification())
   return (rpcResult{"cursor"}.getStr, notifs)
 
 proc rpcChatMessages*(chatId: string, cursorVal: JsonNode, limit: int, success: var bool): string =
@@ -542,10 +540,9 @@ proc parseChatPinnedMessagesResponse*(rpcResult: JsonNode): (string, seq[Message
   var messages: seq[Message] = @[]
   let messagesObj = rpcResult{"pinnedMessages"}
   if(messagesObj != nil and messagesObj.kind != JNull):
-    let pk = status_settings.getSetting[string](Setting.PublicKey, "0x0")
     var msg: Message
     for jsonMsg in messagesObj:
-      msg = jsonMsg["message"].toMessage(pk)
+      msg = jsonMsg["message"].toMessage()
       msg.pinnedBy = $jsonMsg{"pinnedBy"}.getStr
       messages.add(msg)
   return (rpcResult{"cursor"}.getStr, messages)

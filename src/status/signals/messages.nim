@@ -1,6 +1,8 @@
 import json, random, strutils, sequtils, sugar, chronicles, tables
 import json_serialization
 import ../utils
+import ../wallet/account
+import ../libstatus/wallet as status_wallet
 import ../libstatus/accounts as status_accounts
 import ../libstatus/accounts/constants as constants
 import ../libstatus/settings as status_settings
@@ -13,7 +15,7 @@ import types
 import web3/conversions
 from ../utils import parseAddress, wei2Eth
 
-proc toMessage*(jsonMsg: JsonNode, pk: string): Message
+proc toMessage*(jsonMsg: JsonNode): Message
 
 proc toChat*(jsonChat: JsonNode): Chat
 
@@ -23,14 +25,12 @@ proc toCommunity*(jsonCommunity: JsonNode): Community
 
 proc toCommunityMembershipRequest*(jsonCommunityMembershipRequest: JsonNode): CommunityMembershipRequest
 
-proc toActivityCenterNotification*(jsonNotification: JsonNode, pk: string): ActivityCenterNotification
+proc toActivityCenterNotification*(jsonNotification: JsonNode): ActivityCenterNotification
 
 proc fromEvent*(event: JsonNode): Signal = 
   var signal:MessageSignal = MessageSignal()
   signal.messages = @[]
   signal.contacts = @[]
-
-  let pk = status_settings.getSetting[string](Setting.PublicKey, "0x0")
 
   if event["event"]{"contacts"} != nil:
     for jsonContact in event["event"]["contacts"]:
@@ -40,7 +40,7 @@ proc fromEvent*(event: JsonNode): Signal =
 
   if event["event"]{"messages"} != nil:
     for jsonMsg in event["event"]["messages"]:
-      var message = jsonMsg.toMessage(pk)
+      var message = jsonMsg.toMessage()
       if message.hasMention:
         chatsWithMentions.add(message.chatId)
       signal.messages.add(message)
@@ -70,7 +70,7 @@ proc fromEvent*(event: JsonNode): Signal =
 
   if event["event"]{"activityCenterNotifications"} != nil:
     for jsonNotification in event["event"]["activityCenterNotifications"]:
-      signal.activityCenterNotification.add(jsonNotification.toActivityCenterNotification(pk))
+      signal.activityCenterNotification.add(jsonNotification.toActivityCenterNotification())
 
   if event["event"]{"pinMessages"} != nil:
     for jsonPinnedMessage in event["event"]["pinMessages"]:
@@ -150,8 +150,6 @@ proc toChat*(jsonChat: JsonNode): Chat =
   let chatTypeInt = jsonChat{"chatType"}.getInt
   let chatType: ChatType = if chatTypeInt >= ord(low(ChatType)) or chatTypeInt <= ord(high(ChatType)): ChatType(chatTypeInt) else: ChatType.Unknown
 
-  let pk = status_settings.getSetting[string](Setting.PublicKey, "0x0")
-
   result = Chat(
     id: jsonChat{"id"}.getStr,
     communityId: jsonChat{"communityId"}.getStr,
@@ -176,7 +174,7 @@ proc toChat*(jsonChat: JsonNode): Chat =
     result.muted = jsonChat["muted"].getBool
 
   if jsonChat["lastMessage"].kind != JNull: 
-    result.lastMessage = jsonChat{"lastMessage"}.toMessage(pk)
+    result.lastMessage = jsonChat{"lastMessage"}.toMessage()
 
   if jsonChat.hasKey("joined") and jsonChat["joined"].kind != JNull:
     result.joined = jsonChat{"joined"}.getInt
@@ -279,8 +277,17 @@ proc toTextItem*(jsonText: JsonNode): TextItem =
     for child in jsonText["children"]:
       result.children.add(child.toTextItem)
 
+proc currentUserWalletContainsAddress(address: string): bool =
+  let accounts = status_wallet.getWalletAccounts()
+  for acc in accounts:
+    if (acc.address == address):
+      return true
 
-proc toMessage*(jsonMsg: JsonNode, pk: string): Message =
+  return false
+
+proc toMessage*(jsonMsg: JsonNode): Message =
+  let publicChatKey = status_settings.getSetting[string](Setting.PublicKey, "0x0")
+
   var contentType: ContentType
   try:
     contentType = ContentType(jsonMsg{"contentType"}.getInt)
@@ -311,7 +318,7 @@ proc toMessage*(jsonMsg: JsonNode, pk: string): Message =
       timestamp: $jsonMsg{"timestamp"}.getInt,
       whisperTimestamp: $jsonMsg{"whisperTimestamp"}.getInt,
       outgoingStatus: $jsonMsg{"outgoingStatus"}.getStr,
-      isCurrentUser: pk == jsonMsg{"from"}.getStr,
+      isCurrentUser: publicChatKey == jsonMsg{"from"}.getStr,
       stickerHash: "",
       stickerPackId: -1,
       parsedText: @[],
@@ -362,7 +369,36 @@ proc toMessage*(jsonMsg: JsonNode, pk: string): Message =
       signature: jsonMsg["commandParameters"]["signature"].getStr
     )
 
-  message.hasMention = concat(message.parsedText.map(t => t.children.filter(c => c.textType == "mention" and c.literal == pk))).len > 0
+    # This is kind of a workaround in case we're processing a transaction message. The reason for 
+    # that is a message where a recipient accepted to share his address with sender. In that message
+    # a recipient's public key is set as a "from" property of a "Message" object and we cannot 
+    # determine which of two users has initiated transaction actually. 
+    # 
+    # To overcome this we're checking if the "from" address from the "commandParameters" object of 
+    # the "Message" is contained as an address in the wallet of logged in user. If yes, means that
+    # currently logged in user has initiated a transaction (he is a sender), otherwise currently 
+    # logged in user is a recipient.
+    message.isCurrentUser = currentUserWalletContainsAddress(message.commandParameters.fromAddress)
+
+    echo "a"
+    echo "a"
+    echo "a"
+    echo "a"
+    echo "a"
+    echo "a"
+    echo "ADDRESS: ", message.commandParameters.fromAddress, "  containedInLocalWallet: ", message.isCurrentUser
+    echo "a"
+    echo "a"
+    echo "a"
+    echo "a"
+    echo "a"
+    echo "a"
+
+
+
+  message.hasMention = concat(message.parsedText.map(
+    t => t.children.filter(
+      c => c.textType == "mention" and c.literal == publicChatKey))).len > 0
 
   result = message
 
@@ -376,7 +412,7 @@ proc toReaction*(jsonReaction: JsonNode): Reaction =
       retracted: jsonReaction{"retracted"}.getBool
     )
 
-proc toActivityCenterNotification*(jsonNotification: JsonNode, pk: string): ActivityCenterNotification =
+proc toActivityCenterNotification*(jsonNotification: JsonNode): ActivityCenterNotification =
   var activityCenterNotificationType: ActivityCenterNotificationType
   try:
     activityCenterNotificationType = ActivityCenterNotificationType(jsonNotification{"type"}.getInt)
@@ -396,4 +432,4 @@ proc toActivityCenterNotification*(jsonNotification: JsonNode, pk: string): Acti
     )
 
   if jsonNotification.contains("message") and jsonNotification{"message"}.kind != JNull: 
-    result.message = jsonNotification{"message"}.toMessage(pk)
+    result.message = jsonNotification{"message"}.toMessage()
