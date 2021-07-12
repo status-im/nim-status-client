@@ -73,6 +73,7 @@ QtObject:
     pubKey*: string
     loadingMessages*: bool
     unreadMessageCnt: int
+    unreadDirectMessagesAndMentionsCount: int
     channelOpenTime*: Table[string, int64]
 
   proc setup(self: MessageView) = self.QAbstractListModel.setup
@@ -97,6 +98,7 @@ QtObject:
     result.messageList[status_utils.getTimelineChatId()] = newChatMessageList(status_utils.getTimelineChatId(), result.status, false)
     result.loadingMessages = false
     result.unreadMessageCnt = 0
+    result.unreadDirectMessagesAndMentionsCount = 0
     result.setup
 
   # proc getMessageListIndexById(self: MessageView, id: string): int
@@ -367,13 +369,29 @@ QtObject:
     read = unreadMessages
     notify = unreadMessagesCntChanged
 
+  proc getUnreadDirectMessagesAndMentionsCount*(self: MessageView): int {.slot.} =
+    result = self.unreadDirectMessagesAndMentionsCount
+
+  proc unreadDirectMessagesAndMentionsCountChanged*(self: MessageView) {.signal.}
+
+  QtProperty[int] unreadDirectMessagesAndMentionsCount:
+    read = getUnreadDirectMessagesAndMentionsCount
+    notify = unreadDirectMessagesAndMentionsCountChanged
+
   proc calculateUnreadMessages*(self: MessageView) =
     var unreadTotal = 0
+    var currentUnreadDirectMessagesAndMentionsCount = 0
     for chatItem in self.channelView.chats.chats:
       unreadTotal = unreadTotal + chatItem.unviewedMessagesCount
+      currentUnreadDirectMessagesAndMentionsCount = currentUnreadDirectMessagesAndMentionsCount + chatItem.mentionsCount
+      if chatItem.chatType == ChatType.OneToOne:
+        currentUnreadDirectMessagesAndMentionsCount = currentUnreadDirectMessagesAndMentionsCount + chatItem.unviewedMessagesCount
     if unreadTotal != self.unreadMessageCnt:
       self.unreadMessageCnt = unreadTotal
       self.unreadMessagesCntChanged()
+    if self.unreadDirectMessagesAndMentionsCount != currentUnreadDirectMessagesAndMentionsCount:
+      self.unreadDirectMessagesAndMentionsCount = currentUnreadDirectMessagesAndMentionsCount
+      self.unreadDirectMessagesAndMentionsCountChanged()
 
   proc deleteMessage*(self: MessageView, channelId: string, messageId: string) =
     self.messageList[channelId].deleteMessage(messageId)

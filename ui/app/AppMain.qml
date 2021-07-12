@@ -114,8 +114,12 @@ StatusAppLayout {
             icon.name: "chat"
             checked: !chatsModel.communities.activeCommunity.active  && appView.currentIndex === Utils.getAppSectionIndex(Constants.chat)
             tooltip.text: qsTr("Chat")
-            badge.value: chatsModel.messageView.unreadMessagesCount + profileModel.contacts.contactRequests.count
-            badge.visible: badge.value > 0
+            badge.value: chatsModel.messageView.unreadDirectMessagesAndMentionsCount + profileModel.contacts.contactRequests.count
+            badge.visible: badge.value > 0 || (chatsModel.messageView.unreadMessagesCount > 0 && !checked)
+            badge.anchors.rightMargin: badge.value > 0 ? 0 : 4
+            badge.anchors.topMargin: badge.value > 0 ? 4 : 5
+            badge.border.color: hovered ? Theme.palette.statusBadge.hoverBorderColor : Theme.palette.statusAppNavBar.backgroundColor
+            badge.border.width: 2
             onClicked: {
                 if (chatsModel.communities.activeCommunity.active) {
                     chatLayoutContainer.chatColumn.input.hideExtendedArea();
@@ -140,10 +144,11 @@ StatusAppLayout {
             icon.color: model.communityColor
             icon.source: model.thumbnailImage
 
-            badge.visible: model.unviewedMessagesCount > 0
-            badge.value: model.unviewedMessagesCount
+            badge.visible: !checked && model.unviewedMessagesCount > 0
             badge.border.color: hovered ? Theme.palette.statusBadge.hoverBorderColor : Theme.palette.statusBadge.borderColor
             badge.border.width: 2
+            badge.anchors.rightMargin: 4
+            badge.anchors.topMargin: 5
 
             popupMenu: StatusPopupMenu {
                 id: communityContextMenu
@@ -220,7 +225,7 @@ StatusAppLayout {
                 checked: appView.currentIndex == Utils.getAppSectionIndex(Constants.profile)
                 onClicked: appMain.changeAppSection(Constants.profile)
 
-                badge.visible: !profileModel.mnemonic.isBackedUp && appView.children[appView.currentIndex] !== profileLayoutContainer
+                badge.visible: !profileModel.mnemonic.isBackedUp && !checked
                 badge.anchors.rightMargin: 4
                 badge.anchors.topMargin: 5
                 badge.border.color: hovered ? Theme.palette.statusBadge.hoverBorderColor : Theme.palette.statusAppNavBar.backgroundColor
