@@ -17,6 +17,8 @@ proc toMessage*(jsonMsg: JsonNode, pk: string): Message
 
 proc toChat*(jsonChat: JsonNode): Chat
 
+proc toStatusUpdate*(jsonStatusUpdate: JsonNode): StatusUpdate
+
 proc toReaction*(jsonReaction: JsonNode): Reaction
 
 proc toCommunity*(jsonCommunity: JsonNode): Community
@@ -51,6 +53,11 @@ proc fromEvent*(event: JsonNode): Signal =
       if chatsWithMentions.contains(chat.id):
         chat.mentionsCount.inc
       signal.chats.add(chat)
+
+  if event["event"]{"statusUpdates"} != nil:
+    for jsonStatusUpdate in event["event"]["statusUpdates"]:
+      var statusUpdate = jsonStatusUpdate.toStatusUpdate
+      signal.statusUpdates.add(statusUpdate) 
 
   if event["event"]{"installations"} != nil:
     for jsonInstallation in event["event"]["installations"]:
@@ -198,6 +205,16 @@ proc toChat*(jsonChat: JsonNode): Chat =
     for jsonMember in jsonChat["membershipUpdateEvents"]:
       result.membershipUpdateEvents.add(jsonMember.toChatMembershipEvent)
 
+proc toStatusUpdate*(jsonStatusUpdate: JsonNode): StatusUpdate =
+  let statusTypeInt = jsonStatusUpdate{"status-type"}.getInt
+  let statusType: StatusUpdateType = if statusTypeInt >= ord(low(StatusUpdateType)) or statusTypeInt <= ord(high(StatusUpdateType)): StatusUpdateType(statusTypeInt) else: StatusUpdateType.Unknown
+  result = StatusUpdate(
+    publicKey: jsonStatusUpdate{"public-key"}.getStr,
+    statusType: statusType,
+    clock: jsonStatusUpdate{"clock"}.getBiggestInt,
+    text: jsonStatusUpdate{"text"}.getStr
+  )
+
 proc toCommunity*(jsonCommunity: JsonNode): Community =
   result = Community(
     id: jsonCommunity{"id"}.getStr,
@@ -219,7 +236,7 @@ proc toCommunity*(jsonCommunity: JsonNode): Community =
     communityImage: IdentityImage()
   )
   
-  result.lastSeen = initOrderedTable[string, string]()
+  result.memberStatus = initOrderedTable[string, StatusUpdate]()
 
   if jsonCommunity.hasKey("images") and jsonCommunity["images"].kind != JNull:
     if jsonCommunity["images"].hasKey("thumbnail"):

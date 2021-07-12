@@ -245,9 +245,7 @@ QtObject:
         if (channel == nil):
           channel = self.communities.getChannel(msg.chatId)
           if (channel == nil):
-            continue
-          else:
-            self.communities.updateMemberVisibility(channel.communityId, msg.fromAuthor, msg.timestamp)            
+            continue          
         if msg.chatId == self.channelView.activeChannel.id:
           discard self.status.chat.markMessagesSeen(msg.chatId, @[msg.id])
           self.newMessagePushed()
@@ -298,6 +296,7 @@ QtObject:
     trace "Loading more messages", chaId = self.channelView.activeChannel.id
     self.status.chat.chatMessages(self.channelView.activeChannel.id, false)
     self.status.chat.chatReactions(self.channelView.activeChannel.id, false)
+    self.status.chat.statusUpdates()
     self.messagesLoaded();
 
   proc loadMoreMessagesWithIndex*(self: MessageView, channelIndex: int) {.slot.} =
@@ -307,6 +306,7 @@ QtObject:
     trace "Loading more messages", chaId = selectedChannel.id
     self.status.chat.chatMessages(selectedChannel.id, false)
     self.status.chat.chatReactions(selectedChannel.id, false)
+    self.status.chat.statusUpdates()
     self.messagesLoaded();
 
   proc loadingMessagesChanged*(self: MessageView, value: bool) {.signal.}

@@ -124,6 +124,7 @@ Item {
         }
 
         StatusSettingsLineButton {
+            id: onlineUsers
             text: qsTr("Online users")
             isSwitch: true
             switchChecked: appSettings.showOnlineUsers
@@ -131,6 +132,23 @@ Item {
                 appSettings.showOnlineUsers = !appSettings.showOnlineUsers
             }
         }
+
+        Loader {
+            active: onlineUsers.switchChecked
+            anchors.left: parent.left
+            anchors.right: parent.right
+            sourceComponent: StatusSettingsLineButton {
+                text: qsTr("Broadcast user status")
+                isSwitch: true
+                switchChecked: profileModel.profile.sendUserStatus
+                onClicked: function (checked) {
+                    if (profileModel.profile.sendUserStatus !== checked) {
+                        profileModel.setSendUserStatus(checked)
+                    }
+                }
+            }
+        }
+        
 
         // StatusSettingsLineButton {
         //     //% "Node Management"

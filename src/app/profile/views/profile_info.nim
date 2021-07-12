@@ -14,6 +14,7 @@ QtObject:
     appearance*: int
     ensVerified*: bool
     messagesFromContactsOnly*: bool
+    sendUserStatus*: bool
 
   proc setup(self: ProfileInfoView) =
     self.QObject.setup
@@ -31,6 +32,7 @@ QtObject:
     result.identityImage = IdentityImage()
     result.ensVerified = false
     result.messagesFromContactsOnly = false
+    result.sendUserStatus = false
     result.setup
 
   proc profileChanged*(self: ProfileInfoView) {.signal.}
@@ -46,6 +48,7 @@ QtObject:
     self.ensVerified = profile.ensVerified
     self.identityImage = profile.identityImage
     self.messagesFromContactsOnly = profile.messagesFromContactsOnly
+    self.sendUserStatus = profile.sendUserStatus
     self.profileChanged()
 
   proc setIdentityImage*(self: ProfileInfoView, identityImage: IdentityImage) =
@@ -129,4 +132,15 @@ QtObject:
 
   QtProperty[bool] ensVerified:
     read = ensVerified
+    notify = profileChanged
+
+  proc sendUserStatus*(self: ProfileInfoView): bool {.slot.} = result = self.sendUserStatus
+  proc setSendUserStatus*(self: ProfileInfoView, sendUserStatus: bool) {.slot.} =
+    if self.sendUserStatus == sendUserStatus:
+      return
+    self.sendUserStatus = sendUserStatus
+    self.profileChanged()
+  QtProperty[bool] sendUserStatus:
+    read = sendUserStatus
+    write = setSendUserStatus
     notify = profileChanged

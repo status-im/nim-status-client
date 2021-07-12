@@ -40,10 +40,12 @@ proc init*(self: ProfileController, account: Account) =
   let network = self.status.settings.getSetting[:string](Setting.Networks_CurrentNetwork, DEFAULT_NETWORK_NAME)
   let appearance = self.status.settings.getSetting[:int](Setting.Appearance)
   let messagesFromContactsOnly = self.status.settings.getSetting[:bool](Setting.MessagesFromContactsOnly)
+  let sendUserStatus = self.status.settings.getSetting[:bool](Setting.SendUserStatus)
   profile.appearance = appearance
   profile.id = pubKey
   profile.address = account.keyUid
   profile.messagesFromContactsOnly = messagesFromContactsOnly
+  profile.sendUserStatus = sendUserStatus
 
   let identityImage = self.status.profile.getIdentityImage(profile.address)
 

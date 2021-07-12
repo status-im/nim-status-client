@@ -47,11 +47,10 @@ QtObject:
     if unreadTotal != community.unviewedMessagesCount:
       community.unviewedMessagesCount = unreadTotal
 
-  proc updateMemberVisibility*(self: CommunitiesView, communityId, pubKey, timestamp: string) =
-    self.joinedCommunityList.updateMemberVisibility(communityId, pubKey, timestamp)
-    if communityId == self.activeCommunity.communityItem.id:
-      self.activeCommunity.setCommunityItem(self.joinedCommunityList.getCommunityById(communityId))
-      self.activeCommunity.triggerMemberUpdate()
+  proc updateMemberVisibility*(self: CommunitiesView, statusUpdate: StatusUpdate) =
+    self.joinedCommunityList.updateMemberVisibility(statusUpdate)
+    self.activeCommunity.setCommunityItem(self.joinedCommunityList.getCommunityById(self.activeCommunity.communityItem.id))
+    self.activeCommunity.triggerMemberUpdate()
 
   proc updateCommunityChat*(self: CommunitiesView, newChat: Chat) =
     var community = self.joinedCommunityList.getCommunityById(newChat.communityId)
@@ -360,7 +359,8 @@ QtObject:
       result = fmt"Error inviting to the community: {e.msg}"
 
   proc inviteUsersToCommunity*(self: CommunitiesView, pubKeysJSON: string): string {.slot.} =
-    self.inviteUsersToCommunityById(self.activeCommunity.id(), pubKeysJSON)
+    result = self.inviteUsersToCommunityById(self.activeCommunity.id(), pubKeysJSON)
+    self.status.chat.statusUpdates()
 
   proc exportComumnity*(self: CommunitiesView): string {.slot.} =
     try:
@@ -409,6 +409,7 @@ QtObject:
     try:
       self.status.chat.acceptRequestToJoinCommunity(requestId)
       self.removeMembershipRequest(requestId, true)
+      self.status.chat.statusUpdates()
     except Exception as e:
       error "Error accepting request to join the community", msg = e.msg
       return "Error accepting request to join the community"

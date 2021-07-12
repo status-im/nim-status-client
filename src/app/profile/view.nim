@@ -179,3 +179,10 @@ QtObject:
 
   QtProperty[QVariant] mutedChats:
     read = getMutedChats
+
+  proc setSendUserStatus*(self: ProfileView, sendUserStatus: bool) {.slot.} =
+    if (sendUserStatus == self.profile.sendUserStatus):
+      return
+    self.profile.setSendUserStatus(sendUserStatus)
+    self.status.saveSetting(Setting.SendUserStatus, sendUserStatus)
+
