@@ -56,16 +56,33 @@ proc tokenOfOwnerByIndex(contract: Erc721Contract, address: Address, index: Stui
     return -1
   result = fromHex[int](res)
 
+proc balanceOf(contract: Erc721Contract, address: Address): int =
+  let
+    balanceOf = BalanceOf(address: address)
+    payload = %* [{
+      "to": $contract.address,
+      "data": contract.methods["balanceOf"].encodeAbi(balanceOf)
+    }, "latest"]
+    response = callPrivateRPC("eth_call", payload)
+    jsonResponse = parseJson($response)
+  if (not jsonResponse.hasKey("result")):
+    return 0
+  let res = jsonResponse["result"].getStr
+  if (res == "0x"):
+    return 0
+  result = fromHex[int](res)
+
 proc tokensOfOwnerByIndex(contract: Erc721Contract, address: Address): seq[int] =
   var index = 0
   var token: int
+  var maxIndex: int = balanceOf(contract, address)
   result = @[]
-  while (true):
+  while index < maxIndex and result.len <= MAX_TOKENS:
     token = tokenOfOwnerByIndex(contract, address, index.u256)
-    if (token == -1 or token == 0 or result.len > MAX_TOKENS):
-      return result
     result.add(token)
     index = index + 1
+
+  return result
 
 proc getCryptoKittiesBatch*(address: Address, offset: int = 0): seq[Collectible] =
   var cryptokitties: seq[Collectible]

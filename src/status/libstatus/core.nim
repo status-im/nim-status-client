@@ -21,6 +21,7 @@ proc callPrivateRPC*(methodName: string, payload = %* []): string =
     let response = status_go.callPrivateRPC($inputJSON)
     result = $response
     if parseJSON(result).hasKey("error"):
+      writeStackTrace()
       error "rpc response error", result, payload, methodName
   except Exception as e:
     error "error doing rpc request", methodName = methodName, exception=e.msg
