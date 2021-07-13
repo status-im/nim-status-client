@@ -248,6 +248,7 @@ Item {
     Component {
         id: createChannelPopup
         CreateChannelPopup {
+            anchors.centerIn: parent
             pinnedMessagesPopupComponent: root.pinnedMessagesPopupComponent
             onClosed: {
                 destroy()
@@ -258,6 +259,7 @@ Item {
     Component {
         id: createCategoryPopup
         CreateCategoryPopup {
+            anchors.centerIn: parent
             onClosed: {
                 destroy()
             }
