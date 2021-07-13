@@ -368,12 +368,12 @@ $(NIM_WINDOWS_PREBUILT_DLLS):
 nim_windows_launcher: | deps
 	$(ENV_SCRIPT) nim c -d:debug --outdir:./bin --passL:"-static-libgcc -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive" src/nim_windows_launcher.nim
 
-STATUS_CLIENT_ZIP ?= pkg/Status.zip
+STATUS_CLIENT_EXE ?= pkg/Status.exe
 
-$(STATUS_CLIENT_ZIP): override RESOURCES_LAYOUT := -d:production
-$(STATUS_CLIENT_ZIP): OUTPUT := tmp/windows/dist/Status
-$(STATUS_CLIENT_ZIP): nim_status_client nim_windows_launcher $(NIM_WINDOWS_PREBUILT_DLLS)
-	rm -rf pkg/*.zip tmp/windows/dist
+$(STATUS_CLIENT_EXE): override RESOURCES_LAYOUT := -d:production
+$(STATUS_CLIENT_EXE): OUTPUT := tmp/windows/dist/Status
+$(STATUS_CLIENT_EXE): nim_status_client nim_windows_launcher $(NIM_WINDOWS_PREBUILT_DLLS)
+	rm -rf pkg/*.exe tmp/windows/dist
 	mkdir -p $(OUTPUT)/bin $(OUTPUT)/resources $(OUTPUT)/vendor $(OUTPUT)/resources/i18n
 	cat windows-install.txt | unix2dos > $(OUTPUT)/INSTALL.txt
 	cp status.ico status.svg resources.rcc $(FLEETS) $(OUTPUT)/resources/
@@ -389,14 +389,15 @@ $(STATUS_CLIENT_ZIP): nim_status_client nim_windows_launcher $(NIM_WINDOWS_PREBU
 	windeployqt --compiler-runtime --qmldir ui --release \
 		tmp/windows/dist/Status/bin/DOtherSide.dll
 	mv tmp/windows/dist/Status/bin/vc_redist.x64.exe tmp/windows/dist/Status/vendor/
+	cp status.iss $(OUTPUT)/status.iss
 # if WINDOWS_CODESIGN_PFX_PATH is not set then DLLs, EXEs are not signed
 ifdef WINDOWS_CODESIGN_PFX_PATH
 	scripts/sign-windows-bin.sh ./tmp/windows/dist/Status
 endif
-	echo -e $(BUILD_MSG) "zip"
+	echo -e $(BUILD_MSG) "exe"
 	mkdir -p pkg
 	cd $(OUTPUT) && \
-	7z a ../../../../$(STATUS_CLIENT_ZIP) *
+	ISCC -D"OUTPUTDIR=../../../../pkg" -D"BaseName=$(shell basename $(STATUS_CLIENT_EXE) .exe)" status.iss
 
 pkg: $(PKG_TARGET)
 
@@ -406,7 +407,7 @@ tgz-linux: $(STATUS_CLIENT_TARBALL)
 
 pkg-macos: check-pkg-target-macos $(STATUS_CLIENT_DMG)
 
-pkg-windows: check-pkg-target-windows $(STATUS_CLIENT_ZIP)
+pkg-windows: check-pkg-target-windows $(STATUS_CLIENT_EXE)
 
 clean: | clean-common
 	rm -rf bin/* node_modules bottles/* pkg/* tmp/* $(STATUSGO)

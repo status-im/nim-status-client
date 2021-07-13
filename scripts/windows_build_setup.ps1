@@ -15,7 +15,7 @@ function Install-Scoop {
 # Install Git and other dependencies
 function Install-Dependencies {
     Write-Host "Installing dependencies..."
-    scoop install --global 7zip git dos2unix findutils wget make cmake gcc go rcedit
+    scoop install --global 7zip git dos2unix findutils wget make cmake gcc go rcedit inno-setup
     scoop bucket add extras
     scoop install --global vcredist2017
 }
@@ -63,7 +63,9 @@ export VCINSTALLDIR="/c/BuildTools/VC"
 
 You might also have to include the following paths in your `$PATH:
 
-export PATH=`"/c/BuildTools/MSBuild/Current/Bin:/c/BuildTools/VC/Tools/MSVC/14.27.29110/bin:`$PATH`"
+export PATH=`"/c/BuildTools/MSBuild/Current/Bin:`$PATH`"
+export PATH=`"/c/BuildTools/VC/Tools/MSVC/14.27.29110/bin:`$PATH`"
+export PATH=`"/c/ProgramData/scoop/apps/inno-setup/current:`$PATH`"
 "@
 }
 
