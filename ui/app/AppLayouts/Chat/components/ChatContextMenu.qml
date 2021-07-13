@@ -34,9 +34,11 @@ StatusPopupMenu {
             if (chatItem.chatType === Constants.chatTypeOneToOne) {
                 const userProfileImage = appMain.getProfileImage(chatItem.id)
                 return openProfilePopup(
-                  chatItem.name,
-                  chatItem.id,
-                  userProfileImage || chatItem.identicon
+                    chatItem.name,
+                    chatItem.id,
+                    userProfileImage || chatItem.identicon,
+                    "",
+                    chatItem.name
                 )
             }
             if (chatItem.chatType === Constants.chatTypePrivateGroupChat) {
