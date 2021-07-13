@@ -12,7 +12,7 @@ proc getNetworkConfig(currentNetwork: string): JsonNode =
   result = constants.DEFAULT_NETWORKS.first("id", currentNetwork)
 
 
-proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, networkConfig: JsonNode, fleet: Fleet = Fleet.PROD): JsonNode =
+proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, networkConfig: JsonNode, fleet: Fleet = Fleet.PROD, bloomFilterMode = false): JsonNode =
   let upstreamUrl = networkConfig["config"]["UpstreamConfig"]["URL"]
   var newDataDir = networkConfig["config"]["DataDir"].getStr
   newDataDir.removeSuffix("_rpc")
@@ -31,10 +31,11 @@ proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, networkCon
   result["ShhextConfig"]["InstallationID"] = newJString(installationId)
   # TODO: commented since it's not necessary (we do the connections thru C bindings). Enable it thru an option once status-nodes are able to be configured in desktop
   # result["ListenAddr"] = if existsEnv("STATUS_PORT"): newJString("0.0.0.0:" & $getEnv("STATUS_PORT")) else: newJString("0.0.0.0:30305")
+  result["WakuConfig"]["BloomFilterMode"] = newJBool(bloomFilterMode)
 
-proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, currentNetwork: string = constants.DEFAULT_NETWORK_NAME, fleet: Fleet = Fleet.PROD): JsonNode =
+proc getNodeConfig*(fleetConfig: FleetConfig, installationId: string, currentNetwork: string = constants.DEFAULT_NETWORK_NAME, fleet: Fleet = Fleet.PROD, bloomFilterMode = false): JsonNode =
   let networkConfig = getNetworkConfig(currentNetwork)
-  result = getNodeConfig(fleetConfig, installationId, networkConfig, fleet)
+  result = getNodeConfig(fleetConfig, installationId, networkConfig, fleet, bloomFilterMode)
 
 proc hashPassword*(password: string): string =
   result = "0x" & $keccak_256.digest(password)

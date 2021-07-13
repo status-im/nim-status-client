@@ -90,8 +90,8 @@ proc changeNetwork*(self: AccountModel, fleetConfig: FleetConfig, network: strin
   if statusGoResult.error != "":
     error "Error removing all recent stickers", msg=statusGoResult.error
 
-proc getNodeConfig*(self: AccountModel, fleetConfig: FleetConfig, installationId: string, networkConfig: JsonNode, fleet: Fleet = Fleet.PROD): JsonNode =
-  result = status_accounts.getNodeConfig(fleetConfig, installationId, networkConfig, fleet)
+proc getNodeConfig*(self: AccountModel, fleetConfig: FleetConfig, installationId: string, networkConfig: JsonNode, fleet: Fleet = Fleet.PROD, bloomFilterMode = false): JsonNode =
+  result = status_accounts.getNodeConfig(fleetConfig, installationId, networkConfig, fleet, bloomFilterMode)
 
-proc getNodeConfig*(self: AccountModel, fleetConfig: FleetConfig, installationId: string, currentNetwork: string = DEFAULT_NETWORK_NAME, fleet: Fleet = Fleet.PROD): JsonNode =
-  result = status_accounts.getNodeConfig(fleetConfig, installationId, currentNetwork, fleet)
+proc getNodeConfig*(self: AccountModel, fleetConfig: FleetConfig, installationId: string, currentNetwork: string = DEFAULT_NETWORK_NAME, fleet: Fleet = Fleet.PROD, bloomFilterMode = false): JsonNode =
+  result = status_accounts.getNodeConfig(fleetConfig, installationId, currentNetwork, fleet, bloomFilterMode)

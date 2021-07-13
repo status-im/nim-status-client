@@ -146,6 +146,7 @@ proc mainProc() =
     chat.init()
     utilsController.init()
     browserController.init()
+    node.init()
 
     wallet.checkPendingTransactions()
 
@@ -175,7 +176,6 @@ proc mainProc() =
   # Initialize only controllers whose init functions
   # do not need a running node
   proc initControllers() =
-    node.init()
     login.init()
     onboarding.init()
 

@@ -132,6 +132,33 @@ Item {
             }
         }
 
+        StatusSettingsLineButton {
+            text: qsTr("Waku Bloom Mode")
+            isSwitch: true
+            switchChecked: nodeModel.wakuBloomFilterMode
+            onClicked: function (checked) {
+                openPopup(bloomConfirmationDialogComponent, {bloomFilterMode: checked})
+            }
+
+            Component {
+                id: bloomConfirmationDialogComponent
+                ConfirmationDialog {
+                    property bool bloomFilterMode: false
+
+                    id: confirmDialog
+                    //% "Warning!"
+                    title: qsTrId("close-app-title")
+                    confirmationText: qsTrId("The account will be logged out. When you login again, the selected mode will be enabled")
+                    onConfirmButtonClicked: {
+                        nodeModel.setWakuBloomFilterMode(bloomFilterMode)
+                    }
+                    onClosed: {
+                        destroy()
+                    }
+                }
+            }
+        }
+
         // StatusSettingsLineButton {
         //     //% "Node Management"
         //     text: qsTrId("node-management")

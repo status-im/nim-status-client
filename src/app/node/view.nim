@@ -1,11 +1,15 @@
-import NimQml
-import ../../status/[status, node]
+import NimQml, chronicles, strutils, json
+import ../../status/[status, node, types, settings, accounts]
+
+logScope:
+  topics = "node-view"
 
 QtObject:
   type NodeView* = ref object of QObject
     status*: Status
     callResult: string
     lastMessage*: string
+    wakuBloomFilterMode*: bool
 
   proc setup(self: NodeView) =
     self.QObject.setup
@@ -15,6 +19,7 @@ QtObject:
     result.status = status
     result.callResult = "Use this tool to call JSONRPC methods"
     result.lastMessage = ""
+    result.wakuBloomFilterMode = false
     result.setup
 
   proc delete*(self: NodeView) =
@@ -58,3 +63,27 @@ QtObject:
     read = lastMessage
     write = setLastMessage
     notify = receivedMessage
+
+  proc initialized(self: NodeView) {.signal.}
+
+  proc getWakuBloomFilterMode*(self: NodeView): bool {.slot.} =
+    result = self.wakuBloomFilterMode
+
+  QtProperty[bool] wakuBloomFilterMode:
+    read = getWakuBloomFilterMode
+    notify = receivedMessage
+
+  proc setWakuBloomFilterMode*(self: NodeView, bloomFilterMode: bool) {.slot.} =
+    discard self.status.settings.saveSetting(Setting.WakuBloomFilterMode, bloomFilterMode)
+    var fleetStr = self.status.settings.getSetting[:string](Setting.Fleet)
+    let fleet = if fleetStr == "": Fleet.PROD else: parseEnum[Fleet](fleetStr)
+    let installationId = self.status.settings.getSetting[:string](Setting.InstallationId)
+    let updatedNodeConfig = self.status.accounts.getNodeConfig(self.status.fleet.config, installationId, $self.status.settings.getCurrentNetwork(), fleet, bloomFilterMode)    
+    discard self.status.settings.saveSetting(Setting.NodeConfig, updatedNodeConfig)
+    quit(QuitSuccess) # quits the app TODO: change this to logout instead when supported
+
+  proc init*(self: NodeView) {.slot.} =
+    self.wakuBloomFilterMode = self.status.settings.getSetting[:bool](Setting.WakuBloomFilterMode)
+
+
+

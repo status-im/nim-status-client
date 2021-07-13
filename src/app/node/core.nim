@@ -31,3 +31,5 @@ proc init*(self: NodeController) =
 
   self.status.events.on(SignalType.DiscoverySummary.event) do(e:Args):
     self.status.network.peerSummaryChange(DiscoverySummarySignal(e).enodes)
+
+  self.view.init()
