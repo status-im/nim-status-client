@@ -57,11 +57,12 @@ QtObject:
       result = self.getCommunityChannelById(channel)
       if not result.isNil:
         return result
+    
     # even if communities are active, if we don't find a chat, it's possibly
     # because we are looking for a normal chat, so continue below
+
     let index = self.chats.chats.findIndexById(channel)
-    if index > -1:
-      return self.chats.getChannel(index)
+    return self.chats.getChannel(index)
 
   proc updateChannelInRightList*(self: ChannelView, channel: Chat) =
     if (self.communities.activeCommunity.active):
@@ -151,16 +152,19 @@ QtObject:
     notify = activeChannelChanged
 
   proc setActiveChannel*(self: ChannelView, channel: string) {.slot.} =
-    if (self.activeChannel.id == "" and channel == backToFirstChat):
-      self.setActiveChannelByIndex(0)
+    if (channel.len == 0):
+      return
+    
+    if (channel == backToFirstChat):
+      if (self.activeChannel.id.len == 0):
+        self.setActiveChannelByIndex(0)
       return
 
-    if(channel == "" or channel == backToFirstChat): return
     let selectedChannel = self.getChannelById(channel)
-
     self.activeChannel.setChatItem(selectedChannel)
     
     discard self.status.chat.markAllChannelMessagesRead(self.activeChannel.id)
+
     self.activeChannelChanged()
 
   proc getActiveChannel*(self: ChannelView): QVariant {.slot.} =

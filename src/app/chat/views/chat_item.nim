@@ -29,6 +29,9 @@ QtObject:
   proc membershipChanged*(self: ChatItemView) {.signal.}
 
   proc setChatItem*(self: ChatItemView, chatItem: Chat) =
+    if (chatItem.isNil):
+      return
+
     self.chatItem = chatItem
     self.chatMembers.setMembers(chatItem.members)
     self.membershipChanged()

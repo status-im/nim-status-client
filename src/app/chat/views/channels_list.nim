@@ -117,7 +117,11 @@ QtObject:
 
     result = self.chats.len
 
-  proc getChannel*(self: ChannelsList, index: int): Chat = self.chats[index]
+  proc getChannel*(self: ChannelsList, index: int): Chat = 
+    if index < 0 or index >= self.chats.len:
+      return
+
+    result = self.chats[index]
 
   proc getChannelById*(self: ChannelsList, chatId: string): Chat =
     for chat in self.chats:

@@ -43,17 +43,6 @@ Rectangle {
         anchors.rightMargin: Style.current.padding
     }
 
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.RightButton
-        onClicked: {
-            if (mouse.button === Qt.RightButton) {
-                contactContextMenu.popup()
-                return
-            }
-        }
-    }
-
     HoverHandler {
         onHoveredChanged: container.isHovered = hovered
     }

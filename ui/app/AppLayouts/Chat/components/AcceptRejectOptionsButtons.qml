@@ -45,6 +45,7 @@ Row {
         property int iconSize: 14
         id: menuButton
         anchors.verticalCenter: parent.verticalCenter
+
         MouseArea {
             id: mouseArea
             cursorShape: Qt.PointingHandCursor
@@ -53,28 +54,28 @@ Row {
             onClicked: {
                 contactContextMenu.popup()
             }
+        }
 
-            PopupMenu {
-                id: contactContextMenu
-                hasArrow: false
-                Action {
-                    icon.source: "../../../img/profileActive.svg"
-                    icon.width: menuButton.iconSize
-                    icon.height: menuButton.iconSize
-                    //% "View Profile"
-                    text: qsTrId("view-profile")
-                    onTriggered: root.profileClicked()
-                    enabled: true
-                }
-                Separator {}
-                Action {
-                    icon.source: "../../../img/block-icon.svg"
-                    icon.width: menuButton.iconSize
-                    icon.height: menuButton.iconSize
-                    icon.color: Style.current.danger
-                    text: qsTr("Decline and block")
-                    onTriggered: root.blockClicked()
-                }
+        PopupMenu {
+            id: contactContextMenu
+            hasArrow: false
+            Action {
+                icon.source: "../../../img/profileActive.svg"
+                icon.width: menuButton.iconSize
+                icon.height: menuButton.iconSize
+                //% "View Profile"
+                text: qsTrId("view-profile")
+                onTriggered: root.profileClicked()
+                enabled: true
+            }
+            Separator {}
+            Action {
+                icon.source: "../../../img/block-icon.svg"
+                icon.width: menuButton.iconSize
+                icon.height: menuButton.iconSize
+                icon.color: Style.current.danger
+                text: qsTr("Decline and block")
+                onTriggered: root.blockClicked()
             }
         }
     }
