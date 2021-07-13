@@ -119,9 +119,8 @@ proc init*(self: ProfileController, account: Account) =
     let msgData = MessageSignal(e);
     if msgData.contacts.len > 0:
       # TODO: view should react to model changes
-      self.status.chat.updateContacts(msgData.contacts)
       self.view.contacts.updateContactList(msgData.contacts)
-      self.view.contacts.notifyOnNewContactRequests(msgData.contacts)
+      self.status.chat.updateContacts(msgData.contacts)
     if msgData.installations.len > 0:
       self.view.devices.addDevices(msgData.installations)
 

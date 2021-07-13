@@ -137,6 +137,7 @@ QtObject:
       c.ensName = contact.ensName
       c.ensVerified = contact.ensVerified
       c.identityImage = contact.identityImage
+      c.systemTags = contact.systemTags
 
     if not found:
       self.addContactToList(contact)

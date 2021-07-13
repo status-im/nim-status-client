@@ -64,16 +64,27 @@ QtObject:
     result.setup
 
   proc contactListChanged*(self: ContactsView) {.signal.}
+  proc contactRequestAdded*(self: ContactsView, name: string, address: string) {.signal.}
 
   proc updateContactList*(self: ContactsView, contacts: seq[Profile]) =
     for contact in contacts:
+      var requestAlreadyAdded = false
+      for existingContact in self.contactList.contacts:
+        if existingContact.address == contact.address and existingContact.requestReceived():
+          requestAlreadyAdded = true
+          break
+
       self.contactList.updateContact(contact)
       if contact.systemTags.contains(contactAdded):
         self.addedContacts.updateContact(contact)
-      if contact.systemTags.contains(contactBlocked):
+      if contact.isBlocked():
         self.blockedContacts.updateContact(contact)
-      if contact.systemTags.contains(contactRequest) and not contact.systemTags.contains(contactAdded) and not contact.systemTags.contains(contactBlocked):
+      if contact.requestReceived() and not contact.systemTags.contains(contactAdded) and not contact.systemTags.contains(contactBlocked):
         self.contactRequests.updateContact(contact)
+      if not requestAlreadyAdded and contact.requestReceived():
+        echo "SENDING"
+        self.contactRequestAdded(status_ens.userNameOrAlias(contact), contact.address)
+
       self.contactListChanged()
 
   proc getContactList(self: ContactsView): QVariant {.slot.} =
@@ -85,13 +96,6 @@ QtObject:
     self.blockedContacts.setNewData(contactList.filter(c => c.systemTags.contains(contactBlocked)))
     self.contactRequests.setNewData(contactList.filter(c => c.systemTags.contains(contactRequest) and not c.systemTags.contains(contactAdded) and not c.systemTags.contains(contactBlocked)))
     self.contactListChanged()
-
-  proc contactRequestAdded*(self: ContactsView, name: string, address: string) {.signal.}
-
-  proc notifyOnNewContactRequests*(self: ContactsView, contacts: seq[Profile]) =
-    for contact in contacts:
-      if contact.systemTags.contains(contactRequest) and not contact.systemTags.contains(contactBlocked):
-        self.contactRequestAdded(status_ens.userNameOrAlias(contact), contact.address)
 
   QtProperty[QVariant] list:
     read = getContactList
