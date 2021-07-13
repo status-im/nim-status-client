@@ -96,15 +96,6 @@ QtObject:
   proc validateMnemonic*(self: OnboardingView, mnemonic: string): string {.slot.} =
     result = self.status.wallet.validateMnemonic(mnemonic.strip())
 
-  proc storeDerivedAndLogin(self: OnboardingView, password: string): string {.slot.} =
-    try:
-      result = self.status.accounts.storeDerivedAndLogin(self.status.fleet.config, self.currentAccount.account, password).toJson
-    except StatusGoException as e:
-      var msg = e.msg
-      if e.msg.contains("account already exists"):
-        msg = "Account already exists. Please try importing another account."
-      result = StatusGoError(error: msg).toJson
-
   proc loginResponseChanged*(self: OnboardingView, error: string) {.signal.}
 
   proc setLastLoginResponse*(self: OnboardingView, loginResponse: StatusGoError) =
@@ -140,3 +131,13 @@ QtObject:
     read = isFirstTimeLogin
     write = setFirstTimeLogin
     notify = firstTimeLoginChanged
+
+  proc storeDerivedAndLogin(self: OnboardingView, password: string): string {.slot.} =
+    try:
+      result = self.status.accounts.storeDerivedAndLogin(self.status.fleet.config, self.currentAccount.account, password).toJson
+      self.setFirstTimeLogin(true)
+    except StatusGoException as e:
+      var msg = e.msg
+      if e.msg.contains("account already exists"):
+        msg = "Account already exists. Please try importing another account."
+      result = StatusGoError(error: msg).toJson

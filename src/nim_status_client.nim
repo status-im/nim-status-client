@@ -140,6 +140,9 @@ proc mainProc() =
     onboarding.delete()
 
     status.startMessenger()
+
+    onboarding.onFirstTimeLogin()
+
     profile.init(args.account)
     wallet.init()
     provider.init()

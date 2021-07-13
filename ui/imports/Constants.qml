@@ -23,6 +23,7 @@ QtObject {
     readonly property int fetchRangeLast2Days: 172800
     readonly property int fetchRangeLast3Days: 259200
     readonly property int fetchRangeLast7Days: 604800
+    readonly property int fetchRangeLast31Days: 2678400
 
     readonly property int walletFetchRecentHistoryInterval: 1200000 // 20 mins
 

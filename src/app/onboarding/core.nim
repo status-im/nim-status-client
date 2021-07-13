@@ -39,3 +39,8 @@ proc init*(self: OnboardingController) =
   self.status.events.on(SignalType.NodeLogin.event) do(e:Args):
     self.handleNodeLogin(NodeSignal(e))
   
+proc onFirstTimeLogin*(self: OnboardingController) =
+  info "First time login"
+  debug "Setting default sync period to 7 days"
+  self.status.saveSetting(Setting.DefaultSyncPeriod, 604800) # 1 week in seconds
+  self.view.setFirstTimeLogin(false)
