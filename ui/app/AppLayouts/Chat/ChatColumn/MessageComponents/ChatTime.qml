@@ -7,7 +7,7 @@ StyledText {
     property bool formatDateTime: false
     id: chatTime
     visible: isMessage
-    color: isImage ? Style.current.white : Style.current.secondaryText
+    color: Style.current.secondaryText
     text: formatDateTime ? Utils.formatDateTime(timestamp, globalSettings.locale) : Utils.formatTime(timestamp, globalSettings.locale)
     font.pixelSize: Style.current.asideTextFontSize
     
