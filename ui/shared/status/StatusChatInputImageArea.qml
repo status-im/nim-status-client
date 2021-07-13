@@ -59,7 +59,6 @@ Row {
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
                 onClicked: {
-                    console.log("opening image...")
                     imagePopup.openPopup(chatImage)
                 }
             }
