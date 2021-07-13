@@ -10,11 +10,7 @@ StatusChatImageValidator {
     errorMessage: qsTr("You can only upload %1 images at a time").arg(Constants.maxUploadFiles)
 
     onImagesChanged: {
-        let isValid = true
-        if (images.length > Constants.maxUploadFiles) {
-            isValid = false
-        }
-        root.isValid = isValid
+        root.isValid = images.length <= Constants.maxUploadFiles
         root.validImages = images.slice(0, Constants.maxUploadFiles)
     }
 }

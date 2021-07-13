@@ -113,6 +113,13 @@ ScrollView {
             model: messageListDelegate
             section.property: "sectionIdentifier"
             section.criteria: ViewSection.FullString
+
+            Connections {
+                target: chatsModel.messageView
+                onMessagesLoaded: {
+                    Qt.callLater(chatLogView.positionViewAtBeginning)
+                }
+            }
         }
 
         DelegateModelGeneralized {

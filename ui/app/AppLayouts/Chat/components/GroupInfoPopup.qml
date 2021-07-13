@@ -166,8 +166,17 @@ ModalPopup {
         }
 
         NoFriendsRectangle {
-            id: noContactsRect
-            visible: contactList.membersData.count === 0
+            visible: contactList.membersData.count === 0 && memberCount === 0
+            anchors.top: searchBox.bottom
+            anchors.topMargin: Style.current.xlPadding
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+
+        NoFriendsRectangle {
+            visible: contactList.membersData.count === 0 && memberCount > 0
+            width: 340
+            text: qsTr("All your contacts are already in the group")
+            textColor: Style.current.textColor
             anchors.top: searchBox.bottom
             anchors.topMargin: Style.current.xlPadding
             anchors.horizontalCenter: parent.horizontalCenter

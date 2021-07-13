@@ -6,19 +6,22 @@ import "../../shared"
 
 Row {
     id: imageArea
-    spacing: Style.current.halfPadding
+    spacing: 0
 
     signal imageRemoved(int index)
     property alias imageSource: rptImages.model
 
     Repeater {
         id: rptImages
+
         Item {
-            height: chatImage.paintedHeight + closeBtn.height - 5
-            width: chatImage.width
+            height: Style.current.halfPadding * 2 + chatImage.height + closeBtn.height / 3
+            width: chatImage.width + closeBtn.width / 3
+
             Image {
                 id: chatImage
-                property bool hovered: false
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
                 width: 64
                 height: 64
                 fillMode: Image.PreserveAspectCrop
@@ -26,18 +29,6 @@ Row {
                 smooth: false
                 antialiasing: true
                 source: modelData
-                MouseArea {
-                    cursorShape: Qt.PointingHandCursor
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: {
-                        chatImage.hovered = true
-                    }
-                    onExited: {
-                        chatImage.hovered = false
-                    }
-                }
-
                 layer.enabled: true
                 layer.effect: OpacityMask {
                     maskSource: Item {
@@ -61,19 +52,30 @@ Row {
                     }
                 }
             }
+
+            MouseArea {
+                id: mouseArea
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: {
+                    imagePopup.openPopup(chatImage)
+                }
+            }
+
             RoundButton {
                 id: closeBtn
-                implicitWidth: 24
-                implicitHeight: 24
+                width: 24
+                height: 24
                 padding: 0
-                anchors.top: chatImage.top
-                anchors.topMargin: -5
                 anchors.right: chatImage.right
-                anchors.rightMargin: -Style.current.halfPadding
-                visible: chatImage.hovered || hovered
+                anchors.rightMargin: -width / 3
+                anchors.top: chatImage.top
+                anchors.topMargin: -height / 3
+                hoverEnabled: false
+                opacity: mouseArea.containsMouse || buttonMouseArea.containsMouse ? 1 : 0
                 contentItem: SVGImage {
-                    source: !closeBtn.hovered ?
-                    "../../app/img/close-filled.svg" : "../../app/img/close-filled-hovered.svg"
+                    source: !buttonMouseArea.containsMouse ? "../../app/img/close-filled.svg" : "../../app/img/close-filled-hovered.svg"
                     width: closeBtn.width
                     height: closeBtn.height
                 }
@@ -86,9 +88,11 @@ Row {
                     rptImages.model = tmp
                 }
                 MouseArea {
-                    cursorShape: Qt.PointingHandCursor
+                    id: buttonMouseArea
                     anchors.fill: parent
-                    onPressed: mouse.accepted = false
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: closeBtn.clicked()
                 }
             }
         }
