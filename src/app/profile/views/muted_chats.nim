@@ -53,23 +53,6 @@ QtObject:
     read = getMutedContactsList
     notify = mutedContactsListChanged
 
-  proc unmuteChannel*(self: MutedChatsView, chatId: string) {.slot.} =
-    echo "A"
-    if (self.mutedChats.chats.len == 0 and self.mutedContacts.chats.len == 0): return
-    echo "B"
-    var selectedChannel = self.mutedChats.getChannelById(chatId)
-    if (selectedChannel != nil):
-      discard self.mutedChats.removeChatItemFromList(chatId)
-    else:
-      selectedChannel = self.mutedContacts.getChannelById(chatId)
-      if (selectedChannel == nil): return
-      discard self.mutedContacts.removeChatItemFromList(chatId)
-    echo "C"
-    selectedChannel.muted = false
-    self.status.chat.unmuteChat(selectedChannel)
-    self.mutedChatsListChanged()
-    self.mutedContactsListChanged()
-
   proc updateChats*(self: MutedChatsView, chats: seq[Chat]) =
     for chat in chats:
       if not chat.muted:

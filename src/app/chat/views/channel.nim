@@ -266,20 +266,6 @@ QtObject:
     self.status.chat.muteChat(selectedChannel)
     self.updateChannelInRightList(selectedChannel)
 
-  # TODO(pascal): replace with `unmuteChatItem`, which is id based
-  # instead of index based, when refactoring/removing `ChannelContextMenu` 
-  # (they still make use of this)
-  proc unmuteChannel*(self: ChannelView, channelIndex: int) {.slot.} =
-    if (self.chats.chats.len == 0): return
-    let selectedChannel = self.getChannel(channelIndex)
-    if (selectedChannel == nil): return
-    if (selectedChannel.id == self.activeChannel.id):
-      self.unmuteCurrentChannel()
-      return
-    selectedChannel.muted = false
-    self.status.chat.unmuteChat(selectedChannel)
-    self.updateChannelInRightList(selectedChannel)
-
   proc unmuteChatItem*(self: ChannelView, id: string) {.slot.} =
     if (self.chats.chats.len == 0): return
     let selectedChannel = self.getChannelById(id)

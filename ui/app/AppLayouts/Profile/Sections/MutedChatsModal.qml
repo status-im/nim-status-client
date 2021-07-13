@@ -73,15 +73,16 @@ ModalPopup {
                 anchors.verticalCenter: parent.verticalCenter
                 //% "Unmute"
                 text: qsTrId("unmute")
-                onClicked: {
-                    profileModel.mutedChats.unmuteChannel(model.id)
-                }
+
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true
                     onEntered: {
                         channelItem.isHovered = true
+                    }
+                    onClicked: {
+                        chatsModel.channelView.unmuteChatItem(model.id)
                     }
                 }
             }
