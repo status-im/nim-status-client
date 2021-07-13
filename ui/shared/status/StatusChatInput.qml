@@ -871,11 +871,21 @@ Rectangle {
                 Keys.onReleased: onRelease(event) // gives much more up to date cursorPosition
                 Keys.onShortcutOverride: event.accepted = isUploadFilePressed(event)
                 leftPadding: 0
-                background: Rectangle {
-                    color: "transparent"
-                }
                 selectionColor: Style.current.primarySelectionColor
                 persistentSelection: true
+                onTextChanged: {
+                    var symbols = ":='xX><0O;*dB8-D#%\\";
+                    if ((length > 1) && (symbols.indexOf(getText((cursorPosition - 2), (cursorPosition - 1))) !== -1)) {
+                        const emojis = EmojiJSON.emoji_json.filter(function (emoji) {
+                            if (emoji.aliases_ascii.includes(getText((cursorPosition - 2), cursorPosition)) ||
+                                emoji.aliases_ascii.includes(getText((cursorPosition - 3), cursorPosition))) {
+                                var has2Chars = emoji.aliases_ascii.includes(getText((cursorPosition - 2), cursorPosition));
+                                replaceWithEmoji("", getText(cursorPosition - (has2Chars ? 2 : 3), cursorPosition), emoji.unicode);
+                            }
+                        })
+                    }
+                }
+
                 onReleased: function (event) {
                     const now = Date.now()
                     if (messageInputField.selectedText.trim() !== "") {
