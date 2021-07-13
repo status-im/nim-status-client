@@ -6,6 +6,7 @@ import "../../../../../imports"
 
 Rectangle {
     property bool parentIsHovered: false
+    property bool showEdit: true
     signal hoverChanged(bool hovered)
     property int containerMargin: 2
     property int contentType: 2
@@ -103,7 +104,7 @@ Rectangle {
 
         Loader {
             id: editBtn
-            active: isText && !isEdit && isCurrentUser
+            active: isText && !isEdit && isCurrentUser && showEdit
             sourceComponent: StatusIconButton {
                 id: btn
                 icon.name: "edit-message"

@@ -15,6 +15,7 @@ Item {
     property bool isHovered: typeof hoveredMessage !== "undefined" && hoveredMessage === messageId
     property bool isMessageActive: typeof activeMessage !== "undefined" && activeMessage === messageId
     property bool headerRepeatCondition: (authorCurrentMsg !== authorPrevMsg || shouldRepeatHeader || dateGroupLbl.visible || chatReply.active)
+    property bool showEdit: true
 
     id: root
 
@@ -40,6 +41,7 @@ Item {
         anchors.top: messageContainer.top
         // This is not exactly like the design because the hover becomes messed up with the buttons on top of another Message
         anchors.topMargin: -Style.current.halfPadding
+        showEdit: root.showEdit
     }
 
     Loader {

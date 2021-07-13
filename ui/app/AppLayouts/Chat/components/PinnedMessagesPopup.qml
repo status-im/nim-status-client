@@ -93,6 +93,7 @@ ModalPopup {
                 pinnedBy: model.pinnedBy
                 forceHoverHandler: true
                 isEdited: model.isEdited
+                showEdit: false
             }
         }
     }
