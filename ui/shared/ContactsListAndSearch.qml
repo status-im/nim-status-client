@@ -19,6 +19,7 @@ Item {
     signal userClicked(bool isContact, string pubKey, string ensName, string address)
     property var pubKeys: ([])
     property bool hideCommunityMembers: false
+    property bool addContactEnabled: true
 
     id: root
     width: parent.width
@@ -175,7 +176,7 @@ Item {
         hasExistingContacts: existingContacts.visible
         loading: false
         width: searchResultsWidth > 0 ? searchResultsWidth : parent.width
-
+        addContactEnabled: root.addContactEnabled
         onResultClicked: {
             if (!validate()) {
                 return

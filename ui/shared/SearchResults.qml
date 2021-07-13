@@ -19,6 +19,7 @@ Item {
     property string pubKey: ""
     property string address: ""
     property bool resultClickable: true
+    property bool addContactEnabled: true
 
     property bool isAddedContact: pubKey != "" ? chatsModel.messageView.isAddedContact(pubKey) : false
 
@@ -120,7 +121,7 @@ Item {
             anchors.right: parent.right
             anchors.rightMargin: Style.current.padding
             anchors.verticalCenter: parent.verticalCenter
-            visible: !isAddedContact && !checkIcon.visible
+            visible: addContactEnabled && !isAddedContact && !checkIcon.visible
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
