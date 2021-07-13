@@ -549,11 +549,11 @@ QtObject {
     }
 
     function hasImageExtension(url) {
-        return Constants.acceptedImageExtensions.some(ext => url.includes(ext))
+        return Constants.acceptedImageExtensions.some(ext => url.toLowerCase().includes(ext))
     }
 
     function hasDragNDropImageExtension(url) {
-        return Constants.acceptedDragNDropImageExtensions.some(ext => url.includes(ext))
+        return Constants.acceptedDragNDropImageExtensions.some(ext => url.toLowerCase().includes(ext))
     }
 
     function deduplicate(array) {

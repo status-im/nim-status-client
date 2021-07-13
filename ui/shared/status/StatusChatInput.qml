@@ -224,10 +224,10 @@ Rectangle {
 
     function parseMarkdown(markdownText) {
         const htmlText = markdownText
-          .replace(/\~\~([^*]+)\~\~/gim, '~~<span style="text-decoration: line-through">$1</span>~~')
-          .replace(/\*\*([^*]+)\*\*/gim, ':asterisk::asterisk:<b>$1</b>:asterisk::asterisk:')
-          .replace(/\`([^*]+)\`/gim, '`<code>$1</code>`')
-          .replace(/\*([^*]+)\*/gim, ':asterisk:<i>$1</i>:asterisk:')
+        .replace(/\~\~([^*]+)\~\~/gim, '~~<span style="text-decoration: line-through">$1</span>~~')
+        .replace(/\*\*([^*]+)\*\*/gim, ':asterisk::asterisk:<b>$1</b>:asterisk::asterisk:')
+        .replace(/\`([^*]+)\`/gim, '`<code>$1</code>`')
+        .replace(/\*([^*]+)\*/gim, ':asterisk:<i>$1</i>:asterisk:')
         return htmlText.replace(/\:asterisk\:/gim, "*")
     }
 
@@ -326,9 +326,9 @@ Rectangle {
             insertInTextInput(0, finalText)
         } else {
             if (event.key === Qt.Key_Asterisk ||
-                event.key === Qt.Key_QuoteLeft ||
-                event.key === Qt.Key_Space ||
-                event.key === Qt.Key_AsciiTilde) {
+                    event.key === Qt.Key_QuoteLeft ||
+                    event.key === Qt.Key_Space ||
+                    event.key === Qt.Key_AsciiTilde) {
                 formatInputMessage()
             }
         }
@@ -502,9 +502,9 @@ Rectangle {
 
     function isKeyValid(key) {
         if (key === Qt.Key_Space || key ===  Qt.Key_Tab ||
-            (key >= Qt.Key_Exclam && key <= Qt.Key_Slash) ||
-            (key >= Qt.Key_Semicolon && key <= Qt.Key_Question) ||
-            (key >= Qt.Key_BracketLeft && key <= Qt.Key_hyphen))
+                (key >= Qt.Key_Exclam && key <= Qt.Key_Slash) ||
+                (key >= Qt.Key_Semicolon && key <= Qt.Key_Question) ||
+                (key >= Qt.Key_BracketLeft && key <= Qt.Key_hyphen))
             return false;
         return true;
     }
@@ -553,12 +553,12 @@ Rectangle {
     Connections {
         target: applicationWindow.dragAndDrop
         onDroppedOnValidScreen: (drop) => {
-            let validImages = validateImages(drop.urls)
-            if (validImages.length > 0) {
-                showImageArea(validImages)
-                drop.acceptProposedAction()
-            }
-        }
+                                    let validImages = validateImages(drop.urls)
+                                    if (validImages.length > 0) {
+                                        showImageArea(validImages)
+                                        drop.acceptProposedAction()
+                                    }
+                                }
     }
 
     ListModel {
@@ -742,42 +742,42 @@ Rectangle {
 
         color: isEdit ? Style.current.secondaryinputBackground : Style.current.inputBackground
         radius: control.isStatusUpdateInput ? 36 :
-          height > defaultInputFieldHeight + 1 || extendedArea.visible ? 16 : 32
+                                              height > defaultInputFieldHeight + 1 || extendedArea.visible ? 16 : 32
 
-    ColumnLayout {
-        id: validators
-        anchors.bottom: control.imageErrorMessageLocation === StatusChatInput.ImageErrorMessageLocation.Top ? extendedArea.top : undefined
-        anchors.bottomMargin: control.imageErrorMessageLocation === StatusChatInput.ImageErrorMessageLocation.Top ? -4 : undefined
-        anchors.top: control.imageErrorMessageLocation === StatusChatInput.ImageErrorMessageLocation.Bottom ? extendedArea.bottom : undefined
-        anchors.topMargin: control.imageErrorMessageLocation === StatusChatInput.ImageErrorMessageLocation.Bottom ? (isImage ? -4 : 4) : undefined
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width
-        z: 1
-        StatusChatImageExtensionValidator {
-            Layout.alignment: Qt.AlignHCenter
+        ColumnLayout {
+            id: validators
+            anchors.bottom: control.imageErrorMessageLocation === StatusChatInput.ImageErrorMessageLocation.Top ? extendedArea.top : undefined
+            anchors.bottomMargin: control.imageErrorMessageLocation === StatusChatInput.ImageErrorMessageLocation.Top ? -4 : undefined
+            anchors.top: control.imageErrorMessageLocation === StatusChatInput.ImageErrorMessageLocation.Bottom ? extendedArea.bottom : undefined
+            anchors.topMargin: control.imageErrorMessageLocation === StatusChatInput.ImageErrorMessageLocation.Bottom ? (isImage ? -4 : 4) : undefined
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width
+            z: 1
+            StatusChatImageExtensionValidator {
+                Layout.alignment: Qt.AlignHCenter
+            }
+            StatusChatImageSizeValidator {
+                Layout.alignment: Qt.AlignHCenter
+            }
+            StatusChatImageQtyValidator {
+                Layout.alignment: Qt.AlignHCenter
+            }
         }
-        StatusChatImageSizeValidator {
-            Layout.alignment: Qt.AlignHCenter
-        }
-        StatusChatImageQtyValidator {
-            Layout.alignment: Qt.AlignHCenter
-        }
-    }
 
         Rectangle {
             id: extendedArea
             visible: isImage || isReply
             height: {
-              if (visible) {
-                  if (isImage) {
-                      return imageArea.height
-                  }
+                if (visible) {
+                    if (isImage) {
+                        return imageArea.height
+                    }
 
-                  if (isReply) {
-                      return replyArea.height + replyArea.anchors.topMargin
-                  }
-              }
-              return 0
+                    if (isReply) {
+                        return replyArea.height + replyArea.anchors.topMargin
+                    }
+                }
+                return 0
             }
             anchors.left: messageInput.left
             anchors.right: messageInput.right
@@ -805,7 +805,7 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.rightMargin: control.isStatusUpdateInput ? actions.width + 2* Style.current.padding : Style.current.halfPadding
                 anchors.top: parent.top
-                anchors.topMargin: control.isStatusUpdateInput ? 0 : Style.current.halfPadding
+                anchors.topMargin: Style.current.halfPadding
                 visible: isImage
                 width: messageInputField.width - actions.width
                 onImageRemoved: {
@@ -882,7 +882,7 @@ Rectangle {
                         // If it's a double click, just check the mouse position
                         // If it's a mouse select, use the start and end position average)
                         let x = now < messageInputField.lastClick + 500 ? x = event.x :
-                                                        (messageInputField.cursorRectangle.x + event.x) / 2
+                                                                          (messageInputField.cursorRectangle.x + event.x) / 2
                         x -= textFormatMenu.width / 2
 
                         textFormatMenu.popup(x, -messageInputField.height-2)
@@ -1019,8 +1019,8 @@ Rectangle {
         Item {
             id: actions
             width: control.isStatusUpdateInput ?
-              imageBtn2.width + sendBtn.anchors.leftMargin + sendBtn.width :
-              emojiBtn.width + stickersBtn.anchors.leftMargin + stickersBtn.width
+                       imageBtn2.width + sendBtn.anchors.leftMargin + sendBtn.width :
+                       emojiBtn.width + stickersBtn.anchors.leftMargin + stickersBtn.width
             anchors.bottom: control.isStatusUpdateInput && extendedArea.visible ? extendedArea.bottom : parent.bottom
             anchors.bottomMargin: control.isStatusUpdateInput ? Style.current.smallPadding+2: 4
             anchors.right: parent.right
