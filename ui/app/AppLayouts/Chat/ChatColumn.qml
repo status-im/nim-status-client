@@ -199,15 +199,14 @@ StackLayout {
     }
 
     function clickOnNotification() {
+        // So far we're just showing this app as the top most window. Once we decide about the way
+        // how to notify the app what channle should be displayed within the app when user clicks
+        // notificaiton bubble this part should be updated accordingly.
+        //
+        // I removed part of this function which caused app crash.
         applicationWindow.show()
         applicationWindow.raise()
         applicationWindow.requestActivate()
-        appMain.changeAppSection(Constants.chat)
-        if (currentNotificationChatId) {
-            chatsModel.channelView.setActiveChannel(currentNotificationChatId)
-        } else if (currentNotificationCommunityId) {
-            chatsModel.communities.setActiveCommunity(currentNotificationCommunityId)
-        }
     }
 
     Connections {
