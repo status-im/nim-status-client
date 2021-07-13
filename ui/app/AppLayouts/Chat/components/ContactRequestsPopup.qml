@@ -62,9 +62,10 @@ ModalPopup {
             title: qsTr("Decline all contacts")
             confirmationText: qsTr("Are you sure you want to decline all these contact requests")
             onConfirmButtonClicked: {
+                const requests = profileModel.contacts.contactRequests
                 const pubkeys = []
-                for (let i = 0; i < contactList.count; i++) {
-                    pubkeys.push(contactList.itemAtIndex(i).address)
+                for (let i = 0; i < requests.count; i++) {
+                    pubkeys.push(requests.rowData(i, "address"))
                 }
                 profileModel.contacts.rejectContactRequests(JSON.stringify(pubkeys))
                 declineAllDialog.close()
@@ -76,9 +77,10 @@ ModalPopup {
             title: qsTr("Accept all contacts")
             confirmationText: qsTr("Are you sure you want to accept all these contact requests")
             onConfirmButtonClicked: {
+                const requests = profileModel.contacts.contactRequests
                 const pubkeys = []
-                for (let i = 0; i < contactList.count; i++) {
-                    pubkeys.push(contactList.itemAtIndex(i).address)
+                for (let i = 0; i < requests.count; i++) {
+                    pubkeys.push(requests.rowData(i, "address"))
                 }
                 profileModel.contacts.acceptContactRequests(JSON.stringify(pubkeys))
                 acceptAllDialog.close()
