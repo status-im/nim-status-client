@@ -15,6 +15,11 @@ QtObject:
   proc delete*(self: MessageItem) =
     self.QObject.delete
 
+  proc newMessageItem*(status: Status): MessageItem =
+    new(result, delete)
+    result.status = status
+    result.setup
+
   proc newMessageItem*(status: Status, message: Message): MessageItem =
     new(result, delete)
     result.messageItem = message

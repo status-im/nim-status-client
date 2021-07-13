@@ -392,3 +392,12 @@ QtObject:
 
   QtProperty[QVariant] userList:
     read = getUserList
+
+  proc messageSearch*(self: ChatMessageList, searchTerm: string): string {.slot.} =
+    let lowercaseTerm = searchTerm.toLowerAscii
+    var messageIds: seq[string] = @[]
+    for message in self.messages:
+      if message.text.toLowerAscii.contains(lowercaseTerm):
+        # TODO try to send a Variant
+        messageIds.add(message.id)
+    return messageIds.toJson

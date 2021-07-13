@@ -17,7 +17,7 @@ Item {
     property bool isCurrentUser: false
     property string timestamp: "1234567"
     property string sticker: "Qme8vJtyrEHxABcSVGPF95PtozDgUyfr1xGjePmFdZgk9v"
-    property int contentType: 2 // constants don't work in default props
+    property int contentType: 1 // constants don't work in default props
     property string chatId: "chatId"
     property string outgoingStatus: ""
     property string responseTo: ""

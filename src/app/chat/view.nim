@@ -9,7 +9,7 @@ import ../../status/ens as status_ens
 import ../../status/chat/[chat, message]
 import ../../status/profile/profile
 import web3/[conversions, ethtypes]
-import views/[channels_list, message_list, chat_item, suggestions_list, reactions, stickers, groups, transactions, communities, community_list, community_item, format_input, ens, activity_notification_list, channel, messages]
+import views/[channels_list, message_list, chat_item, suggestions_list, reactions, stickers, groups, transactions, communities, community_list, community_item, format_input, ens, activity_notification_list, channel, messages, message_item]
 import ../utils/image_utils
 import ../../status/tasks/[qt, task_runner_impl]
 import ../../status/tasks/marathon/mailserver/worker

@@ -158,6 +158,7 @@ DISTFILES += \
     app/AppLayouts/Chat/ContactsColumn/AddChat.qml \
     app/AppLayouts/Chat/ContactsColumn/ClosedEmptyView.qml \
     app/AppLayouts/Chat/components/AcceptRejectOptionsButtons.qml \
+    app/AppLayouts/Chat/components/BadgeContent.qml \
     app/AppLayouts/Chat/components/ChooseBrowserPopup.qml \
     app/AppLayouts/Chat/ContactsColumn/CommunityButton.qml \
     app/AppLayouts/Chat/ContactsColumn/CommunityList.qml \
@@ -179,6 +180,7 @@ DISTFILES += \
     app/AppLayouts/Chat/components/InviteFriendsPopup.qml \
     app/AppLayouts/Chat/components/MessageContextMenu.qml \
     app/AppLayouts/Chat/components/NicknamePopup.qml \
+    app/AppLayouts/Chat/components/SearchPopup.qml \
     app/AppLayouts/Chat/components/SuggestedChannels.qml \
     app/AppLayouts/Chat/components/GroupInfoPopup.qml \
     app/AppLayouts/Chat/data/channelList.js \

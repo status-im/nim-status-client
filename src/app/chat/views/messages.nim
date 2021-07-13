@@ -10,7 +10,7 @@ import ../../../status/chat/[chat, message]
 import ../../../status/profile/profile
 import ../../../status/tasks/[qt, task_runner_impl]
 
-import communities, chat_item, channels_list, communities, community_list, message_list, channel
+import communities, chat_item, channels_list, communities, community_list, message_list, channel, message_item
 
 # TODO: remove me
 import ../../../status/libstatus/chat as libstatus_chat
@@ -70,6 +70,7 @@ QtObject:
     pinnedMessagesList*: OrderedTable[string, ChatMessageList]
     channelView*: ChannelView
     communities*: CommunitiesView
+    observedMessageItem*: MessageItem
     pubKey*: string
     loadingMessages*: bool
     unreadMessageCnt: int
@@ -84,8 +85,8 @@ QtObject:
     self.messageList = initOrderedTable[string, ChatMessageList]()
     self.pinnedMessagesList = initOrderedTable[string, ChatMessageList]()
     self.channelOpenTime = initTable[string, int64]()
-    # self.QObject.delete
     self.QAbstractListModel.delete
+    self.observedMessageItem.delete
 
   proc newMessageView*(status: Status, channelView: ChannelView, communitiesView: CommunitiesView): MessageView =
     new(result, delete)
@@ -97,6 +98,7 @@ QtObject:
     result.messageList[status_utils.getTimelineChatId()] = newChatMessageList(status_utils.getTimelineChatId(), result.status, false)
     result.loadingMessages = false
     result.unreadMessageCnt = 0
+    result.observedMessageItem = newMessageItem(status)
     result.setup
 
   # proc getMessageListIndexById(self: MessageView, id: string): int
@@ -283,6 +285,23 @@ QtObject:
   QtProperty[QVariant] messageList:
     read = getMessageList
     notify = activeChannelChanged
+
+  proc observedMessageItemChanged*(self: MessageView) {.signal.}
+
+  proc setObservedMessageItem*(self: MessageView, chatId: string, messageId: string) {.slot.} =
+    if(messageId == ""): return
+    if (not self.messageList.hasKey(chatId)): return
+    let message = self.messageList[chatId].getMessageById(messageId) 
+    if (message.id == ""):
+      return
+    self.observedMessageItem.setMessageItem(message)
+    self.observedMessageItemChanged()
+
+  proc getObservedMessageItem*(self: MessageView): QVariant {.slot.} = newQVariant(self.observedMessageItem)
+  QtProperty[QVariant] observedMessageItem:
+    read = getObservedMessageItem
+    write = setObservedMessageItem
+    notify = observedMessageItemChanged
 
   proc getPinnedMessagesList(self: MessageView): QVariant {.slot.} =
     self.upsertChannel(self.channelView.activeChannel.id)
