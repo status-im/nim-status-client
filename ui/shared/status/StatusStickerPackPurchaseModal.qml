@@ -105,6 +105,8 @@ ModalPopup {
                 getGasEthValue: walletModel.gasView.getGasEthValue
                 getFiatValue: walletModel.balanceView.getFiatValue
                 defaultCurrency: walletModel.balanceView.defaultCurrency
+                maxPriorityFeePerGas: walletModel.gasView.maxPriorityFeePerGas
+                
                 property var estimateGas: Backpressure.debounce(gasSelector, 600, function() {
                     if (!(root.stickerPackId > -1 && selectFromAccount.selectedAccount && root.packPrice && parseFloat(root.packPrice) > 0)) {
                         selectedGasLimit = 325000

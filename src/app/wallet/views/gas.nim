@@ -122,3 +122,10 @@ QtObject:
   proc defaultGasLimit*(self: GasView): string {.slot.} = result = ?.self.defaultGasLimit
   QtProperty[string] defaultGasLimit:
     read = defaultGasLimit
+
+  proc maxPriorityFeePerGas*(self: GasView): string {.slot.} = 
+    result = self.status.wallet.maxPriorityFeePerGas()
+    debug "Max priority fee per gas", value=result
+
+  QtProperty[string] maxPriorityFeePerGas:
+    read = maxPriorityFeePerGas

@@ -7,6 +7,7 @@ proc fromEvent*(jsonSignal: JsonNode): Signal =
   if jsonSignal["event"].kind != JNull:
     signal.eventType = jsonSignal["event"]["type"].getStr
     signal.blockNumber = jsonSignal["event"]{"blockNumber"}.getInt
+    signal.baseFeePerGas = jsonSignal["event"]{"baseFeePerGas"}.getStr
     signal.erc20 = jsonSignal["event"]{"erc20"}.getBool
     signal.accounts = @[]
     if jsonSignal["event"]["accounts"].kind != JNull:

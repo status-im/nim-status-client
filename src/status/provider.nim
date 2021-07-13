@@ -56,11 +56,13 @@ const ACC_METHODS = toHashSet(["eth_accounts", "eth_coinbase"])
 type ProviderModel* = ref object
   events*: EventEmitter
   permissions*: PermissionsModel
+  wallet*: WalletModel
 
-proc newProviderModel*(events: EventEmitter, permissions: PermissionsModel): ProviderModel =
+proc newProviderModel*(events: EventEmitter, permissions: PermissionsModel, wallet: WalletModel): ProviderModel =
   result = ProviderModel()
   result.events = events
   result.permissions = permissions
+  result.wallet = wallet
 
 proc requestType(message: string): RequestTypes = 
   let data = message.parseJson
@@ -114,6 +116,8 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
       let password = request["password"].getStr()
       let selectedGasLimit = request["selectedGasLimit"].getStr()
       let selectedGasPrice = request["selectedGasPrice"].getStr()
+      let selectedTipLimit = request["selectedTipLimit"].getStr()
+      let selectedOverallLimit = request["selectedOverallLimit"].getStr()
       let txData = if (request["params"][0].hasKey("data") and request["params"][0]["data"].kind != JNull):
         request["params"][0]["data"].getStr()
       else:
@@ -124,8 +128,10 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
       var response = ""
       var validInput: bool = true
 
+      let eip1559Enabled = self.wallet.isEIP1559Enabled()
+
       try:
-        validateTransactionInput(fromAddress, to, "", value, selectedGasLimit, selectedGasPrice, txData, "dummy")
+        validateTransactionInput(fromAddress, to, "", value, selectedGasLimit, selectedGasPrice, txData, eip1559Enabled, selectedTipLimit, selectedOverallLimit, "dummy")
       except Exception as e:
         validInput = false
         success = false
@@ -133,7 +139,7 @@ proc process(self: ProviderModel, data: Web3SendAsyncReadOnly): string =
 
       if validInput:
         # TODO make this async
-        response = wallet.sendTransaction(fromAddress, to, value, selectedGasLimit, selectedGasPrice, password, success, txData)
+        response = wallet.sendTransaction(fromAddress, to, value, selectedGasLimit, selectedGasPrice, eip1559Enabled, selectedTipLimit, selectedOverallLimit, password, success, txData)
         errorMessage = if not success:
           if response == "":
             "web3-response-error"

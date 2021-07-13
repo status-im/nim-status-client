@@ -4,7 +4,7 @@ import
 import
   transactions, ../../types
 
-proc sendTransaction*(tx: var EthSend, password: string, success: var bool): string =
+proc sendTransaction*(tx: var TransactionData, password: string, success: var bool): string =
   success = true
   try:
     let response = transactions.sendTransaction(tx, password)
@@ -13,7 +13,7 @@ proc sendTransaction*(tx: var EthSend, password: string, success: var bool): str
     success = false
     result = e.msg
 
-proc estimateGas*(tx: var EthSend, success: var bool): string =
+proc estimateGas*(tx: var TransactionData, success: var bool): string =
   success = true
   try:
     let response = transactions.estimateGas(tx)

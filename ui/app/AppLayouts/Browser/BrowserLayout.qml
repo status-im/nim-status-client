@@ -77,7 +77,7 @@ Rectangle {
     }
 
     // TODO we'll need a new dialog at one point because this one is not using the same call, but it's good for now
-property Component sendTransactionModalComponent: SignTransactionModal {}
+    property Component sendTransactionModalComponent: SignTransactionModal {}
 
     property Component signMessageModalComponent: SignMessageModal {}
 

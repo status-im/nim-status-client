@@ -88,6 +88,8 @@ proc wei2Eth*(input: string, decimals: int): string =
     error "Error parsing this wei value", input, msg=e.msg
     result = "0"
   
+proc wei2Gwei*(input: string): string =
+  result = wei2Eth(input, 9)
 
 proc first*(jArray: JsonNode, fieldName, id: string): JsonNode =
   if jArray == nil:
@@ -139,12 +141,19 @@ proc isAddress*(strAddress: string): bool =
     return false
   return true
 
-proc validateTransactionInput*(from_addr, to_addr, assetAddress, value, gas, gasPrice, data, uuid: string) =
+proc validateTransactionInput*(from_addr, to_addr, assetAddress, value, gas, gasPrice, data: string, isEIP1599Enabled: bool, maxPriorityFeePerGas, maxFeePerGas, uuid: string) =
   if not isAddress(from_addr): raise newException(ValueError, "from_addr is not a valid ETH address")
   if not isAddress(to_addr): raise newException(ValueError, "to_addr is not a valid ETH address")
   if parseFloat(value) < 0: raise newException(ValueError, "value should be a number >= 0")
   if parseInt(gas) <= 0: raise newException(ValueError, "gas should be a number > 0")
-  if parseFloat(gasPrice) <= 0: raise newException(ValueError, "gasPrice should be a number > 0")
+  if isEIP1599Enabled:
+    if gasPrice != "" and (maxPriorityFeePerGas != "" or maxFeePerGas != ""): 
+      raise newException(ValueError, "gasPrice can't be used with maxPriorityFeePerGas and maxFeePerGas")
+    if gasPrice == "": 
+      if parseFloat(maxPriorityFeePerGas) <= 0: raise newException(ValueError, "maxPriorityFeePerGas should be a number > 0")
+      if parseFloat(maxFeePerGas) <= 0: raise newException(ValueError, "maxFeePerGas should be a number > 0")
+  else:
+    if parseFloat(gasPrice) <= 0: raise newException(ValueError, "gasPrice should be a number > 0")
   if uuid.isEmptyOrWhitespace(): raise newException(ValueError, "uuid is required")
 
   if assetAddress != "": # If a token is being used

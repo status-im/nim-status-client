@@ -128,3 +128,7 @@ proc watchTransaction*(transactionHash: string): string =
 proc checkRecentHistory*(addresses: seq[string]): string =
   let payload = %* [addresses]
   result = callPrivateRPC("wallet_checkRecentHistory", payload)
+
+proc maxPriorityFeePerGas*(): string =
+  let payload = %* []
+  result = callPrivateRPC("eth_maxPriorityFeePerGas", payload)
