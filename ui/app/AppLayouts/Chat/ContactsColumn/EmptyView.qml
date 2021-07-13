@@ -51,7 +51,7 @@ Rectangle {
             anchors.rightMargin: 10
             icon.height: 20
             icon.width: 20
-            iconColor: Style.current.darkGrey
+            iconColor: Style.current.midGrey
         }
 
         MouseArea {
